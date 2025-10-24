@@ -1,9 +1,20 @@
 version: '3.8'
 services:
-  web:
+  front:
     build: ./front
     ports:
       - "5173:5173"
     volumes:
       - ./front:/app
       - /app/node_modules
+
+  back:
+    build:
+      dockerfile: Dockerfile
+      context: ./back
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
+    ports:
+      - 3000:${SERVER_PORT}
+    volumes:
+      - ./back:/app
