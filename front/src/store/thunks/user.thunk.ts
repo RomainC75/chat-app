@@ -18,9 +18,9 @@ export const loginUser = createAsyncThunk<TLoginResponse, { loginUser: TLoginsUs
 );
 
 
-export const verify = createAsyncThunk<TVerifyResponse, { token: string }>(
+export const verify = createAsyncThunk<TVerifyResponse>(
     "/user/verify",
-    async ({ token }) => {
-        return fetchVerify(token);
+    async () => {
+        return fetchVerify();
     }
 );

@@ -20,21 +20,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token")
-    console.log("-> token ", token)
     if (!token) {
       navigate("/login")
     }else {
-      dispatch(verify())
+      dispatch(verify()).unwrap().catch(()=>{
+        navigate("/login")
+      })
     }
-    
   }, []);
 
-  // Afficher un loader pendant la vérification de l'authentification
-  if (isChecking || connectedUser.isLoading || !connectedUser.user) {
+  if (connectedUser.isLoading) {
     return <Loader />;
   }
 
-  // L'utilisateur est authentifié et a le rôle requis (ou aucun rôle spécifique n'est requis)
   return <>{children}</>;
 };
 

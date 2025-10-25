@@ -39,9 +39,7 @@ const userSlice = createSlice({
       loginUser.fulfilled,
       (state, action: PayloadAction<TLoginResponse>) => {
         state.isLoading = false;
-        console.log("--> action ", action);
         localStorage.setItem("token", action.payload.token)
-        // state.user = action.payload;
       }
     );
     builder.addCase(loginUser.rejected, (state) => {
@@ -56,11 +54,12 @@ const userSlice = createSlice({
       verify.fulfilled,
       (state, action: PayloadAction<TVerifyResponse>) => {
         state.isLoading = false;
-        console.log("--> action ", action);
+        state.isConnected = true;
       }
     );
     builder.addCase(verify.rejected, (state) => {
       state.isLoading = false;
+      state.isConnected = false;
     });
   },
 });
