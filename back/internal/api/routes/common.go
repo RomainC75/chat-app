@@ -1,19 +1,28 @@
 package routes
 
 import (
-	"chat/internal/api/middlewares"
+	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
-func ConnectRoutes() *mux.Router {
+func ConnectRoutes() http.Handler {
 	r := mux.NewRouter()
 
-	r.Use(middlewares.CORSMiddleware)
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization", "X-Requested-With"}),
+		handlers.AllowCredentials(),
+	)
+
+	r.Use(corsHandler)
+
 	api := r.PathPrefix("/api").Subrouter()
 
 	HealthRoutes(api)
 	UserRoutes(api)
 
-	return api
+	return corsHandler(r)
 }
