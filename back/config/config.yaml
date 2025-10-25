@@ -16,4 +16,4 @@ jwt:
   secret: "azerty123"
 
 front:
-  host: "url"
+  host: "http://localhost:5173"
