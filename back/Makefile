@@ -1,2 +1,13 @@
+migrateup:
+	migrate --path db/migration --database "postgresql://name:pass@localhost:5432/chat?sslmode=disable" --verbose up
+
+migratedown:
+	migrate --path db/migration --database "postgresql://name:pass@localhost:5432/chat?sslmode=disable" --verbose down
+
+sqlc:
+	sqlc generate
+
 test:
-	gotestsum --watch --format testname -- -v ./... 
+	go test -v -cover ./...
+
+.PHONY: migrateup migratedown sqlc test

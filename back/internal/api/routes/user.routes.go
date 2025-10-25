@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"chat/internal/api/controllers"
 	"chat/internal/api/middlewares"
 	"net/http"
 
@@ -8,9 +9,7 @@ import (
 )
 
 func UserRoutes(mux *mux.Router) {
-
-	mux.Handle("/user/signup", middlewares.CORSMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
-	})))
+	authCtrl := controllers.NewAuthCtrl()
+	mux.Handle("/user/signup", middlewares.CORSMiddleware(http.HandlerFunc(authCtrl.HandleSignupUser))).Methods("POST")
 
 }
