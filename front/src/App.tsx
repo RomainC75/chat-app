@@ -1,31 +1,42 @@
-import { useState } from 'react'
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
-import Signup from './components/Signup'
-import './App.css'
-
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-  },
-})
+import Signup from "./components/Signup";
+import "./App.css";
+import { Navigate, Route, Routes, BrowserRouter as Router, } from "react-router-dom";
+import Login from "./components/Login";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'signup'>('signup')
-
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {currentView === 'signup' && <Signup />}
-      {currentView === 'home' && (
-        <div>
-          <h1>Welcome to Real-Time Chat</h1>
-          <button onClick={() => setCurrentView('signup')}>
-            Go to Signup
-          </button>
-        </div>
-      )}
-    </ThemeProvider>
-  )
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route
+            path="/signup"
+            element={
+                <Signup />
+            }
+          />
+          <Route
+            path="/login"
+            element={
+                <Login />
+            }
+          /> 
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <div>
+                  <h1>Application</h1>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
-export default App
+export default App;

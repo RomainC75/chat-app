@@ -7,14 +7,13 @@ import {
   Paper,
   Container,
 } from '@mui/material'
-
 import { useDispatch, useSelector } from 'react-redux'
-import { signupUser, type AppDispatch, type RootState } from '../store/store';
+import { loginUser,  type AppDispatch, type RootState } from '../store/store';
 import { useNavigate } from 'react-router-dom';
 
-const Signup = () => {
+const Login = () => {
     const dispach = useDispatch<AppDispatch>();
-    const navigate = useNavigate();
+    const navigate = useNavigate()
     const { isLoading } = useSelector(
     (state: RootState) => state.user
   );
@@ -36,19 +35,8 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateForm()){
-        console.log("---> password don't match")
-        return
-    }
-    await dispach(signupUser({signupUser:{email: formData.email, password: formData.password}})).unwrap()
-    navigate("/login")
-  }
-
-  const validateForm = (): boolean => {
-    if(formData.confirmPassword != formData.password){
-        return false
-    }
-    return true
+    await dispach(loginUser({loginUser:{email: formData.email, password: formData.password}})).unwrap()
+    navigate("/")
   }
 
   return (
@@ -63,11 +51,9 @@ const Signup = () => {
       >
         <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
           <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Sign Up
+            Login
           </Typography>
-          
-
-
+        
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <TextField
               margin="normal"
@@ -95,18 +81,6 @@ const Signup = () => {
               value={formData.password}
               onChange={handleChange}
             />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="confirmPassword"
-              label="Confirm Password"
-              type="password"
-              id="confirmPassword"
-              autoComplete="new-password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
             <Button
               type="submit"
               fullWidth
@@ -114,7 +88,7 @@ const Signup = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={isLoading}
             >
-              {isLoading ? 'Signing Up...' : 'Sign Up'}
+              {isLoading ? 'Login...' : 'Login'}
             </Button>
           </Box>
         </Paper>
@@ -123,4 +97,4 @@ const Signup = () => {
   )
 }
 
-export default Signup
+export default Login

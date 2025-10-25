@@ -1,32 +1,68 @@
-
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { signupUser } from "../thunks/user.thunk";
-import type { TUserSlice } from "../../types/user.type";
+import { loginUser, signupUser, verify } from "../thunks/user.thunk";
+import type { TLoginResponse, TUserSlice, TVerifyResponse } from "../../types/user.type";
 
 const initialState: TUserSlice = {
-    isLoading: false,
-    errorMessage: null,
-    user: null,
-}
+  isLoading: false,
+  errorMessage: null,
+  user: null,
+  isConnected: false
+};
 
 const userSlice = createSlice({
-    name: "user",
-    initialState,
-    reducers: {},
+  name: "user",
+  initialState,
 
-    extraReducers(builder) {
-        builder.addCase(signupUser.pending, (state) => {
-            state.isLoading = true;
-        });
-        builder.addCase(signupUser.fulfilled, (state, action: PayloadAction<string>) => {
-            state.isLoading = false;
-            console.log("--> action ", action)
-            // state.user = action.payload;
-        });
-        builder.addCase(signupUser.rejected, (state) => {
-            state.isLoading = false;
-        });
-    }
+  reducers: {},
+
+  extraReducers(builder) {
+    builder.addCase(signupUser.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(
+      signupUser.fulfilled,
+      (state, action: PayloadAction<string>) => {
+        state.isLoading = false;
+        console.log("--> action ", action);
+        // state.user = action.payload;
+      }
+    );
+    builder.addCase(signupUser.rejected, (state) => {
+      state.isLoading = false;
+    });
+
+    // --------- LOGIN ---------
+    builder.addCase(loginUser.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(
+      loginUser.fulfilled,
+      (state, action: PayloadAction<TLoginResponse>) => {
+        state.isLoading = false;
+        console.log("--> action ", action);
+        localStorage.setItem("token", action.payload.token)
+        // state.user = action.payload;
+      }
+    );
+    builder.addCase(loginUser.rejected, (state) => {
+      state.isLoading = false;
+    });
+
+    // --------- VERIFY ---------
+    builder.addCase(verify.pending, (state) => {
+      state.isLoading = true;
+    });
+    builder.addCase(
+      verify.fulfilled,
+      (state, action: PayloadAction<TVerifyResponse>) => {
+        state.isLoading = false;
+        console.log("--> action ", action);
+      }
+    );
+    builder.addCase(verify.rejected, (state) => {
+      state.isLoading = false;
+    });
+  },
 });
 
 export default userSlice.reducer;
