@@ -1,11 +1,16 @@
 package routes
 
-import "net/http"
+import (
+	"chat/internal/api/middlewares"
+	"net/http"
 
-func HealthRoutes() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	"github.com/gorilla/mux"
+)
+
+func HealthRoutes(mux *mux.Router) {
+
+	mux.Handle("/health/test", middlewares.CORSMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("is healthy"))
-	})
-	return mux
+	})))
+
 }

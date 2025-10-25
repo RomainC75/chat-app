@@ -1,11 +1,19 @@
 package routes
 
-import "net/http"
+import (
+	"chat/internal/api/middlewares"
 
-func ConnectRoutes() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.Handle("/health", HealthRoutes())
-	// mux.Handle("/user", UserRoutes())
+	"github.com/gorilla/mux"
+)
 
-	return mux
+func ConnectRoutes() *mux.Router {
+	r := mux.NewRouter()
+
+	r.Use(middlewares.CORSMiddleware)
+	api := r.PathPrefix("/api").Subrouter()
+
+	HealthRoutes(api)
+	UserRoutes(api)
+
+	return api
 }

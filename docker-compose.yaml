@@ -4,6 +4,8 @@ services:
     build: ./front
     ports:
       - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:${BACK_PORT}/api
     volumes:
       - ./front:/app
       - /app/node_modules
@@ -13,8 +15,8 @@ services:
       dockerfile: Dockerfile
       context: ./back
     environment:
-      - SERVER_PORT=${SERVER_PORT}
+      - BACK_PORT=${BACK_PORT}
     ports:
-      - 3000:${SERVER_PORT}
+      - 3000:${BACK_PORT}
     volumes:
       - ./back:/app
