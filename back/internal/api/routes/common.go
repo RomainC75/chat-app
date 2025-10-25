@@ -18,6 +18,7 @@ func ConnectRoutes() http.Handler {
 	)
 
 	r.Use(corsHandler)
+	r.Use()
 
 	api := r.PathPrefix("/api").Subrouter()
 

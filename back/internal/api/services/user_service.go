@@ -5,12 +5,23 @@ import (
 	"chat/internal/api/dto/requests"
 	custom_errors "chat/internal/api/errors"
 	repositories "chat/internal/api/repos"
+	"chat/utils/encrypt"
 
 	"context"
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+type LogResponse struct {
+	Id    int32  `json:"id"`
+	Token string `json:"token"`
+}
+
+type VerifyResponse struct {
+	Id    int32  `json:"id"`
+	Email string `json:"email"`
+}
 
 type UserSrv struct {
 	userRepo repositories.UserRepositoryInterface
@@ -43,4 +54,26 @@ func (userSrv *UserSrv) CreateUserSrv(ctx context.Context, user requests.SignupR
 		return db.User{}, err
 	}
 	return createdUser, nil
+}
+
+func (userSrv *UserSrv) LogUserSrv(ctx context.Context, user requests.LoginRequest) (LogResponse, error) {
+	foundUser, err := userSrv.userRepo.FindUserByEmail(ctx, user.Email)
+	if err != nil {
+		return LogResponse{}, errors.New("user not found")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(user.Password))
+	if err != nil {
+		return LogResponse{}, errors.New("wrong password")
+	}
+
+	token, err := encrypt.Generate(foundUser)
+	if err != nil {
+		return LogResponse{}, err
+	}
+
+	return LogResponse{
+		Id:    foundUser.ID,
+		Token: token,
+	}, nil
 }

@@ -10,6 +10,10 @@ import (
 
 func UserRoutes(mux *mux.Router) {
 	authCtrl := controllers.NewAuthCtrl()
-	mux.Handle("/user/signup", middlewares.CORSMiddleware(http.HandlerFunc(authCtrl.HandleSignupUser))).Methods("POST")
+
+	mux.Use(middlewares.AuthMid)
+	mux.Handle("/user/signup", http.HandlerFunc(authCtrl.HandleSignupUser)).Methods("POST")
+	mux.Handle("/user/login", http.HandlerFunc(authCtrl.HandleLoginUser)).Methods("POST")
+	mux.Handle("/user/verify", http.HandlerFunc(authCtrl.HandleVerify)).Methods("GET")
 
 }
