@@ -4,6 +4,7 @@ import (
 	socket_shared "chat/internal/sockets/shared"
 	"chat/utils"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -13,6 +14,9 @@ import (
 
 type IManager interface {
 	RemoveClient(*Client)
+	SendBroadcastMessage(msgIn MessageIn)
+	SendRoomMessage(msgIn MessageIn)
+	CreateRoom(c *Client, roomName string)
 }
 
 type Client struct {
@@ -36,8 +40,13 @@ func NewClient(manager IManager, conn *websocket.Conn, userData socket_shared.Us
 	}
 }
 
-func (c *Client) KillGoroutineChildren() {
+func (c *Client) PrepareToBeDeleted() {
 	c.cancelFn()
+}
+
+func (c *Client) SendToClient(msg MessageOut) {
+	m, _ := json.Marshal(msg)
+	c.egress <- m
 }
 
 func (c *Client) GoListen() {
@@ -59,7 +68,7 @@ func (c *Client) GoListen() {
 					slog.Error("-> client : error unMarshalling the payload")
 				}
 				utils.PrettyDisplay("message in : ", message)
-				c.HandleMessage(message)
+				c.HandleMessageIn(message)
 			}
 		}
 	}()
@@ -90,6 +99,16 @@ func (c *Client) GoWrite() {
 	}()
 }
 
-func (c *Client) HandleMessage(msg MessageIn) {
-
+func (c *Client) HandleMessageIn(msg MessageIn) {
+	fmt.Println("msg", msg.Type, msg.Content["roomName"])
+	switch msg.Type {
+	case BROADCAST_MESSAGE:
+		c.manager.SendBroadcastMessage(msg)
+	case ROOM_MESSAGE:
+		c.manager.SendRoomMessage(msg)
+	case CREATE_ROOM:
+		c.manager.CreateRoom(c, msg.Content["roomName"])
+	default:
+		return
+	}
 }

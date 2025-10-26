@@ -11,18 +11,40 @@ func UnMarshallMessageIn(payload []byte) (MessageIn, error) {
 	return msi, err
 }
 
+// IN
 type MessageIn struct {
-	Type    string
-	Content map[string]any
+	Type    MessageInType
+	Content map[string]string
 }
 
 type MessageInType string
 
-var (
-	MESSAGE              MessageInType = "MESSAGE"
-	BROADCAST            MessageInType = "BROADCAST"
+const (
+	ROOM_MESSAGE         MessageInType = "ROOM_MESSAGE"
+	BROADCAST_MESSAGE    MessageInType = "BROADCAST_MESSAGE"
 	CONNECT_TO_ROOM      MessageInType = "CONNECT_TO_ROOM"
 	CREATE_ROOM          MessageInType = "CREATE_ROOM"
 	SEND_TO_ROOM         MessageInType = "SEND_TO_ROOM"
 	DISCONNECT_FROM_ROOM MessageInType = "DISCONNECT_FROM_ROOM"
 )
+
+// OUT
+
+type MessageOut struct {
+	Type    MessageOutType
+	Content map[string]string
+}
+
+type MessageOutType string
+
+const (
+	NEW_ROOM_MESSAGE       MessageOutType = "NEW_ROOM_MESSAGE"
+	NEW_BROADCAST_MESSAGE  MessageOutType = "NEW_BROADCAST_MESSAGE"
+	MEMBER_JOINED          MessageOutType = "MEMBER_JOINED"
+	MEMBER_LEAVED          MessageOutType = "MEMBER_LEAVED"
+	ROOM_CREATED           MessageOutType = "ROOM_CREATED"
+	CONNECTED_TO_ROOM      MessageOutType = "CONNECTED_TO_ROOM"
+	DISCONNECTED_FROM_ROOM MessageOutType = "DISCONNECTED_FROM_ROOM"
+)
+
+//

@@ -1,30 +1,24 @@
 export const EWsMessageIn = {
-  message: "MESSAGE",
-  idAssigned: "IDASSIGNED",
-  memberJoin: "MEMBERJOIN",
-  memberLeave: "MEMBERLEAVE",
-  broadcast: "BROADCAST",
-  roomCreated: "ROOM_CREATED",
-  roomCreatedByYou: "ROOM_CREATED_BYYOU",
-  roomMessage: "ROOM_MESSAGE",
-  connectedToRoom: "CONNECTED_TO_ROOM",
-  newConnectionToRoom: "NEW_CONNECTION_TO_ROOM",
-  disconnectedFromRoom: "DISCONNECTED_FROM_ROOM",
-  userDisconnectedFromRoom: "USER_DISCONNECTED_FROM_ROOM",
-} as const
+  NEW_ROOM_MESSAGE: "NEW_ROOM_MESSAGE",
+  NEW_BROADCAST_MESSAGE: "NEW_BROADCAST_MESSAGE",
+  MEMBER_JOINED: "MEMBER_JOINED",
+  MEMBER_LEAVED: "MEMBER_LEAVED",
+  ROOM_CREATED: "ROOM_CREATED",
+  CONNECTED_TO_ROOM: "CONNECTED_TO_ROOM",
+  DISCONNECTED_FROM_ROOM: "DISCONNECTED_FROM_ROOM",
+} as const;
 
-export type EWsMessageIn = typeof EWsMessageIn[keyof typeof EWsMessageIn]
+export type EWsMessageIn = (typeof EWsMessageIn)[keyof typeof EWsMessageIn];
 
 export const EWsMessageOut = {
-  message: "MESSAGE",
-  broadcast: "BROADCAST",
-  connectToRoom: "CONNECT_TO_ROOM",
+  roomMessage: "MESSAGE",
+  broadcastMessage: "BROADCAST_MESSAGE",
   createRoom: "CREATE_ROOM",
-  sendToRoom: "SEND_TO_ROOM",
+  connectToRoom: "CONNECT_TO_ROOM",
   disconnectFromRoom: "DISCONNECT_FROM_ROOM",
-} as const
+} as const;
 
-export type EWsMessageOut = typeof EWsMessageOut[keyof typeof EWsMessageOut]
+export type EWsMessageOut = (typeof EWsMessageOut)[keyof typeof EWsMessageOut];
 
 export interface IwebSocketMessageOut {
   type: EWsMessageOut;

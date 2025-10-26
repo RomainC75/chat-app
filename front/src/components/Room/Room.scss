@@ -1,0 +1,596 @@
+.room-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
+
+  // Room Header
+  .room-header {
+    background: linear-gradient(45deg, #667eea 30%, #764ba2 90%) !important;
+    box-shadow: 0 2px 12px rgba(102, 126, 234, 0.15) !important;
+    z-index: 100;
+
+    .MuiToolbar-root {
+      padding: 1rem 1.5rem;
+      min-height: 70px;
+
+      .back-button {
+        color: white;
+        margin-right: 1rem;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          transform: translateX(-2px);
+        }
+      }
+
+      .room-info {
+        flex: 1;
+
+        .room-title {
+          color: white;
+          font-weight: 600;
+          font-size: 1.25rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .room-subtitle {
+          color: rgba(255, 255, 255, 0.8);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+
+          .MuiSvgIcon-root {
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+  }
+
+  // Messages Container
+  .messages-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+
+    .messages-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      scroll-behavior: smooth;
+
+      // Custom scrollbar
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(102, 126, 234, 0.3);
+        border-radius: 3px;
+        transition: background 0.3s ease;
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.5);
+        }
+      }
+
+      // Message Wrapper
+      .message-wrapper {
+        display: flex;
+        width: 100%;
+        animation: fadeInMessage 0.3s ease-out;
+
+        &.own-message {
+          justify-content: flex-end;
+
+          .message-content {
+            flex-direction: row-reverse;
+            max-width: 75%;
+          }
+        }
+
+        &.other-message {
+          justify-content: flex-start;
+
+          .message-content {
+            max-width: 80%;
+          }
+        }
+
+        .message-content {
+          display: flex;
+          gap: 0.75rem;
+          align-items: flex-end;
+
+          .message-avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border: 2px solid white;
+          }
+
+          .message-bubble-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+
+            .message-header {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              margin-bottom: 0.25rem;
+
+              .sender-name {
+                font-weight: 600;
+                color: #667eea;
+                font-size: 0.8rem;
+              }
+
+              .message-time {
+                color: #999;
+                font-size: 0.75rem;
+              }
+            }
+
+            .message-bubble {
+              border-radius: 18px;
+              padding: 0.75rem 1rem;
+              max-width: 100%;
+              word-wrap: break-word;
+              position: relative;
+              transition: all 0.3s ease;
+
+              &.own-bubble {
+                background: linear-gradient(45deg, #667eea 30%, #764ba2 90%);
+                color: white;
+                border-bottom-right-radius: 6px;
+                box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
+
+                .message-text {
+                  color: white;
+                }
+
+                &:hover {
+                  transform: translateY(-1px);
+                  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+                }
+              }
+
+              &.other-bubble {
+                background: white;
+                color: #333;
+                border-bottom-left-radius: 6px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(0, 0, 0, 0.05);
+
+                .message-text {
+                  color: #333;
+                }
+
+                &:hover {
+                  transform: translateY(-1px);
+                  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+                }
+              }
+
+              .message-text {
+                font-size: 0.9rem;
+                line-height: 1.4;
+                margin: 0;
+                white-space: pre-wrap;
+              }
+            }
+
+            .message-time {
+              font-size: 0.75rem;
+              color: #999;
+              align-self: flex-start;
+
+              &.own-time {
+                align-self: flex-end;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Message Input Container
+  .message-input-container {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 0 !important;
+    padding: 1rem 1.5rem !important;
+    border-top: 1px solid rgba(102, 126, 234, 0.1) !important;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05) !important;
+
+    .typing-indicator {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      margin-bottom: 0.5rem;
+      animation: pulse 1.5s infinite;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+
+      .attach-button {
+        color: #667eea;
+        transition: all 0.3s ease;
+        padding: 8px;
+
+        &:hover {
+          background-color: rgba(102, 126, 234, 0.1);
+          transform: rotate(15deg);
+        }
+      }
+
+      .message-input {
+        .MuiOutlinedInput-root {
+          border-radius: 24px;
+          background: white;
+          transition: all 0.3s ease;
+          padding-right: 8px;
+
+          &:hover {
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+          }
+
+          &.Mui-focused {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+
+            .MuiOutlinedInput-notchedOutline {
+              border-color: #667eea;
+              border-width: 2px;
+            }
+          }
+
+          .MuiOutlinedInput-notchedOutline {
+            border-color: rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+          }
+
+          .MuiInputBase-input {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+
+            &::placeholder {
+              color: #999;
+              opacity: 1;
+            }
+          }
+        }
+
+        .input-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          margin-left: 0.5rem;
+
+          .emoji-button {
+            color: #667eea;
+            transition: all 0.3s ease;
+            padding: 6px;
+
+            &:hover {
+              background-color: rgba(102, 126, 234, 0.1);
+              transform: scale(1.1);
+            }
+          }
+
+          .send-button {
+            background: linear-gradient(45deg, #667eea 30%, #764ba2 90%);
+            color: white;
+            transition: all 0.3s ease;
+            padding: 8px;
+
+            &:hover:not(:disabled) {
+              background: linear-gradient(45deg, #5a6fd8 30%, #6a4190 90%);
+              transform: scale(1.05);
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
+
+            &:disabled {
+              background: #ccc;
+              color: #999;
+              cursor: not-allowed;
+            }
+
+            .MuiSvgIcon-root {
+              font-size: 1.2rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Loading State
+  &.room-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+    .MuiTypography-root {
+      color: #667eea;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+  }
+}
+
+// Animations
+@keyframes fadeInMessage {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .room-container {
+    .room-header {
+      .MuiToolbar-root {
+        padding: 0.75rem 1rem;
+        min-height: 60px;
+
+        .room-info {
+          .room-title {
+            font-size: 1.1rem;
+          }
+
+          .room-subtitle {
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+
+    .messages-container {
+      .messages-list {
+        padding: 0.75rem;
+        gap: 0.5rem;
+
+        .message-wrapper {
+          &.own-message .message-content,
+          &.other-message .message-content {
+            max-width: 90%;
+          }
+
+          .message-content {
+            gap: 0.5rem;
+
+            .message-avatar {
+              width: 32px;
+              height: 32px;
+              font-size: 0.8rem;
+            }
+
+            .message-bubble-container {
+              .message-bubble {
+                padding: 0.625rem 0.875rem;
+                border-radius: 16px;
+
+                &.own-bubble {
+                  border-bottom-right-radius: 4px;
+                }
+
+                &.other-bubble {
+                  border-bottom-left-radius: 4px;
+                }
+
+                .message-text {
+                  font-size: 0.85rem;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .message-input-container {
+      padding: 0.75rem 1rem !important;
+
+      .input-wrapper {
+        gap: 0.5rem;
+
+        .message-input {
+          .MuiOutlinedInput-root {
+            border-radius: 20px;
+
+            .MuiInputBase-input {
+              padding: 10px 14px;
+              font-size: 0.85rem;
+            }
+          }
+
+          .input-actions {
+            gap: 0.125rem;
+            margin-left: 0.25rem;
+
+            .emoji-button,
+            .send-button {
+              padding: 6px;
+
+              .MuiSvgIcon-root {
+                font-size: 1rem;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .room-container {
+    .room-header {
+      .MuiToolbar-root {
+        padding: 0.5rem;
+        min-height: 56px;
+
+        .back-button {
+          margin-right: 0.5rem;
+          padding: 6px;
+        }
+
+        .room-info {
+          .room-title {
+            font-size: 1rem;
+          }
+
+          .room-subtitle {
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+
+    .messages-container {
+      .messages-list {
+        padding: 0.5rem;
+
+        .message-wrapper {
+          .message-content {
+            .message-bubble-container {
+              .message-bubble {
+                padding: 0.5rem 0.75rem;
+                border-radius: 14px;
+
+                .message-text {
+                  font-size: 0.8rem;
+                }
+              }
+
+              .message-time {
+                font-size: 0.7rem;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .message-input-container {
+      padding: 0.5rem !important;
+
+      .input-wrapper {
+        .attach-button {
+          padding: 6px;
+        }
+
+        .message-input {
+          .MuiOutlinedInput-root {
+            .MuiInputBase-input {
+              padding: 8px 12px;
+              font-size: 0.8rem;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .room-container {
+    .messages-container {
+      .messages-list {
+        .message-wrapper {
+          .message-content {
+            .message-bubble {
+              &.other-bubble {
+                border: 2px solid #333;
+                background: white;
+              }
+
+              &.own-bubble {
+                border: 2px solid #667eea;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .room-container {
+    .messages-container {
+      .messages-list {
+        scroll-behavior: auto;
+
+        .message-wrapper {
+          animation: none;
+        }
+      }
+    }
+
+    .message-input-container {
+      .input-wrapper {
+        .message-input {
+          .input-actions {
+            .emoji-button,
+            .send-button,
+            .attach-button {
+              transition: none;
+
+              &:hover {
+                transform: none;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @keyframes fadeInMessage {
+    from, to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
