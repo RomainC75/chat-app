@@ -3,6 +3,7 @@ import "./App.css";
 import { Navigate, Route, Routes, BrowserRouter as Router, } from "react-router-dom";
 import Login from "./components/Login";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import Rooms from "./components/Rooms/Rooms";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
               <ProtectedRoute>
                 <div>
                   <h1>Application</h1>
+                  <Rooms/>
                 </div>
               </ProtectedRoute>
             }
