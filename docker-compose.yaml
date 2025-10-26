@@ -6,6 +6,7 @@ services:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:${BACK_PORT}/api
+      - VITE_SOCKET_URL=ws://localhost:${BACK_PORT}
     volumes:
       - ./front:/app
       - /app/node_modules
