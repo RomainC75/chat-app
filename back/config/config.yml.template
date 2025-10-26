@@ -15,3 +15,5 @@ db:
 jwt:
   secret: "azerty123"
 
+front:
+  host: "http://localhost:5173"
