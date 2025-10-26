@@ -15,8 +15,8 @@ func UserRoutes(mux *mux.Router) {
 
 	userRouter.Use(middlewares.AuthMid)
 
-	userRouter.Handle("/user/signup", http.HandlerFunc(authCtrl.HandleSignupUser)).Methods("POST")
-	userRouter.Handle("/user/login", http.HandlerFunc(authCtrl.HandleLoginUser)).Methods("POST")
-	userRouter.Handle("/user/verify", http.HandlerFunc(authCtrl.HandleVerify)).Methods("GET")
+	userRouter.Handle("/signup", http.HandlerFunc(authCtrl.HandleSignupUser)).Methods("POST")
+	userRouter.Handle("/login", http.HandlerFunc(authCtrl.HandleLoginUser)).Methods("POST")
+	userRouter.Handle("/verify", http.HandlerFunc(authCtrl.HandleVerify)).Methods("GET")
 
 }
