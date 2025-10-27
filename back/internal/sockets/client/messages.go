@@ -1,9 +1,7 @@
 package client
 
 import (
-	socket_shared "chat/internal/sockets/shared"
 	"encoding/json"
-	"strconv"
 )
 
 func UnMarshallMessageIn(payload []byte) (MessageIn, error) {
@@ -51,37 +49,3 @@ const (
 	CONNECTED_TO_ROOM      MessageOutType = "CONNECTED_TO_ROOM"
 	DISCONNECTED_FROM_ROOM MessageOutType = "DISCONNECTED_FROM_ROOM"
 )
-
-// Message out
-
-func CreateMessageOut(mType MessageOutType, content map[string]string) MessageOut {
-	mo := MessageOut{
-		Type:    mType,
-		Content: content,
-	}
-	return mo
-}
-
-func CreateBroadcastMessageOut(senderUserData socket_shared.UserData, message string) MessageOut {
-	return CreateMessageOut(NEW_BROADCAST_MESSAGE, map[string]string{
-		"message":    message,
-		"user_id":    strconv.Itoa(int(senderUserData.Id)),
-		"user_email": senderUserData.Email,
-	})
-}
-
-// Message in
-
-func CreateMessageIn(mType MessageInType, content map[string]string) MessageIn {
-	mi := MessageIn{
-		Type:    mType,
-		Content: content,
-	}
-	return mi
-}
-
-func CreateBroadcastMessageIn(message string) MessageIn {
-	return CreateMessageIn(BROADCAST_MESSAGE, map[string]string{
-		"message": message,
-	})
-}
