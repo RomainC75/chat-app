@@ -27,6 +27,7 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 	claim, err := encrypt.GetClaimsFromToken(tokens[0])
 	if err != nil {
 		http.Error(w, "invalid token", http.StatusBadRequest)
+		return
 	}
 	userId := claim["ID"]
 	userEmail := claim["Email"]
