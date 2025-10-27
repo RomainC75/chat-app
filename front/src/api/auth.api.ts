@@ -2,7 +2,7 @@ import type { TLoginResponse, TLoginsUser, TSignupUser, TVerifyResponse } from "
 import openApi from "./open.api";
 import globalApi from "./secure.api";
 
-const basePath = "/user"
+const basePath = "/auth"
 
 export const fetchSignupUser = async (data: TSignupUser): Promise<string> => {
     const response = await openApi.post<string>(`${basePath}/signup`, data);
