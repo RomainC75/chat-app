@@ -26,6 +26,8 @@ func (userRepo *UserRepository) CreateUser(ctx context.Context, arg db.CreateUse
 	user, err := (*userRepo.Store).CreateUser(ctx, arg)
 	if err == sql.ErrNoRows {
 		return db.User{}, custom_errors.NewErrNotFound(err)
+	} else if err != nil {
+		return db.User{}, err
 	}
 	return user, nil
 }
