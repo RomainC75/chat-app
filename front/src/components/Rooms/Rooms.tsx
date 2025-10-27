@@ -54,8 +54,8 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
     const msg: IwebSocketMessageOut = {
         type: EWsMessageOut.createRoom,
         content: {
-            roomName: newRoomName,
-            roomDescription: newRoomDescription
+            name: newRoomName,
+            description: newRoomDescription
         }
     }
     sendWsMessage(JSON.stringify(msg))
