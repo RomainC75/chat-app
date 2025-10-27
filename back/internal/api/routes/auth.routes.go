@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func UserRoutes(mux *mux.Router) {
+func AuthRoutes(mux *mux.Router) {
 	authCtrl := controllers.NewAuthCtrl()
 
 	userRouter := mux.PathPrefix("/auth").Subrouter()

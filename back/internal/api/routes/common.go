@@ -23,7 +23,7 @@ func ConnectRoutes() http.Handler {
 
 	ChatRoutes(api)
 	HealthRoutes(api)
-	UserRoutes(api)
+	AuthRoutes(api)
 
 	return corsHandler(r)
 }
