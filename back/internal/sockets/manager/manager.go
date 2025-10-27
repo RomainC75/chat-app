@@ -5,25 +5,7 @@ import (
 	"chat/internal/sockets/room"
 	socket_shared "chat/internal/sockets/shared"
 	"fmt"
-	"log/slog"
-	"net/http"
 	"sync"
-
-	"github.com/gorilla/websocket"
-)
-
-var (
-	websocketUpgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			// origin := r.Header.Get("Origin")
-			// cfg := config.Get()
-			// frontUrl := cfg.Front.Host
-			// return origin == frontUrl
-			return true
-		},
-	}
 )
 
 type Manager struct {
@@ -41,14 +23,9 @@ func NewManager() *Manager {
 	return &manager
 }
 
-func (m *Manager) ServeWS(w http.ResponseWriter, r *http.Request, userData socket_shared.UserData) {
-	conn, err := websocketUpgrader.Upgrade(w, r, nil)
-	// defer conn.Close()
+func (m *Manager) ServeWS(conn socket_shared.IWebSocket, userData socket_shared.UserData) {
 
-	if err != nil {
-		slog.Error("--> ERROR ", err)
-		return
-	}
+	// defer conn.Close()
 
 	client := client.NewClient(m, conn, userData)
 	m.AddClient(client)

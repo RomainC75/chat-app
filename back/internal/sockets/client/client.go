@@ -21,14 +21,14 @@ type IManager interface {
 
 type Client struct {
 	manager  IManager
-	conn     *websocket.Conn
+	conn     socket_shared.IWebSocket
 	user     socket_shared.UserData
 	egress   chan ([]byte)
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }
 
-func NewClient(manager IManager, conn *websocket.Conn, userData socket_shared.UserData) *Client {
+func NewClient(manager IManager, conn socket_shared.IWebSocket, userData socket_shared.UserData) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Client{
 		manager:  manager,
