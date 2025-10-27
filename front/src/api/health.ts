@@ -1,4 +1,4 @@
-import globalApi from "./global.api";
+import globalApi from "./secure.api";
 
 const basePath = '/';
 

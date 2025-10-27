@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 
-const globalApi: AxiosInstance = axios.create({
+const secureApi: AxiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
     timeout: 15000,
     headers: {
@@ -8,7 +8,7 @@ const globalApi: AxiosInstance = axios.create({
     }
 });
 
-globalApi.interceptors.request.use(
+secureApi.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("token")
         if (!(token && config.headers)){
@@ -21,4 +21,4 @@ globalApi.interceptors.request.use(
 );
 
 
-export default globalApi;
+export default secureApi;
