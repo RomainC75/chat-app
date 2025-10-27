@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-
-	"github.com/gorilla/websocket"
 )
 
 type IManager interface {
@@ -80,18 +78,18 @@ func (c *Client) GoWrite() {
 			c.manager.RemoveClient(c)
 		}()
 
-		c.conn.WriteMessage(websocket.TextMessage, []byte("readyToCommunicate :-)"))
+		c.conn.WriteMessage(socket_shared.TextMessage, []byte("readyToCommunicate :-)"))
 
 		for {
 			message, ok := <-c.egress
 			if !ok {
-				if err := c.conn.WriteMessage(websocket.CloseMessage, nil); err != nil {
+				if err := c.conn.WriteMessage(socket_shared.CloseMessage, nil); err != nil {
 					log.Println("connection closed:", err)
 				}
 				break
 			}
 
-			if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			if err := c.conn.WriteMessage(socket_shared.TextMessage, message); err != nil {
 				log.Println("failed to send message: %v", err)
 			}
 			log.Println("message sent")
