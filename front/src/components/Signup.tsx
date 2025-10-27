@@ -10,7 +10,7 @@ import {
 
 import { useDispatch, useSelector } from 'react-redux'
 import { signupUser, type AppDispatch, type RootState } from '../store/store';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Signup = () => {
     const dispach = useDispatch<AppDispatch>();
@@ -116,6 +116,7 @@ const Signup = () => {
             >
               {isLoading ? 'Signing Up...' : 'Sign Up'}
             </Button>
+            <Link to="/login">Login</Link>
           </Box>
         </Paper>
       </Box>

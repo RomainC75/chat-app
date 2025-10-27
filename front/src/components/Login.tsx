@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginUser,  type AppDispatch, type RootState } from '../store/store';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
     const dispach = useDispatch<AppDispatch>();
@@ -90,6 +90,7 @@ const Login = () => {
             >
               {isLoading ? 'Login...' : 'Login'}
             </Button>
+            <Link to="/signup">Signup</Link>
           </Box>
         </Paper>
       </Box>
