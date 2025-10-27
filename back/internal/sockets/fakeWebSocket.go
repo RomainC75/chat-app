@@ -1,9 +1,6 @@
 package sockets
 
 import (
-	"chat/internal/sockets/client"
-	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -40,13 +37,4 @@ func (fws *FakeWebSocket) WriteMessage(messageType int, data []byte) error {
 func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, err error) {
 	time.Sleep(time.Microsecond * 150)
 	return fws.nextMessageType, fws.nextMessageToWrite, nil
-}
-
-func (fws *FakeWebSocket) GetNextMessageToWriteUnserialized() (int, client.MessageOut, error) {
-	messageType, p, err := fws.GetNextMessageToWrite()
-	fmt.Println("+++++++", string(p))
-	messageToSend := client.MessageOut{}
-	_ = json.Unmarshal(p, &messageToSend)
-
-	return messageType, messageToSend, err
 }

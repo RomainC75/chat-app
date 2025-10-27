@@ -6,26 +6,72 @@ import (
 	"chat/internal/sockets/manager"
 	socket_shared "chat/internal/sockets/shared"
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+type TestDriver struct {
+	manager *manager.Manager
+	socket  socket_shared.IWebSocket
+}
+
+func NewTestDriverAfterConnection() (*TestDriver, *sockets.FakeWebSocket) {
+	manager := manager.NewManager()
+	user1socket := sockets.NewFakeWebSocket()
+	user1Data := socket_shared.UserData{
+		Id:    1,
+		Email: "bob@email.com",
+	}
+	manager.ServeWS(user1socket, user1Data)
+
+	return &TestDriver{
+		manager: manager,
+		socket:  user1socket,
+	}, user1socket
+}
+
+func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *sockets.FakeWebSocket) client.MessageOut {
+	_, p, _ := socket.GetNextMessageToWrite()
+
+	messageOut := client.MessageOut{}
+	_ = json.Unmarshal(p, &messageOut)
+
+	return messageOut
+}
+
+func (td *TestDriver) SetMessageToRead(socket *sockets.FakeWebSocket, messageIn client.MessageIn) {
+	jsonMessage, _ := json.Marshal(messageIn)
+	socket.SetNextMessageToRead(socket_shared.TextMessage, []byte(jsonMessage), nil)
+	socket.ReadMessage()
+
+}
+
+func (td *TestDriver) GetNextMessageToWrite(socket *sockets.FakeWebSocket) (int, client.MessageOut, error) {
+	messageType, p, err := socket.GetNextMessageToWrite()
+	if err != nil {
+		return 0, client.MessageOut{}, err
+	}
+	messageOut := client.MessageOut{}
+	err = json.Unmarshal(p, &messageOut)
+	return messageType, messageOut, err
+
+}
+
+func (td *TestDriver) Close() {
+	td.manager.CloseEveryClientConnections()
+}
+
+func (td *TestDriver) ConnectNewUser(id int32, email string) {
+}
+
+// --------
+
 func TestClient(t *testing.T) {
-	t.Run("created", func(t *testing.T) {
-		fmt.Println("+++++++++++++++++++++++++++++++++++++++++++++")
-		fmt.Println("+++++++++++++++++++++++++++++++++++++++++++++")
-		manager := manager.NewManager()
+	t.Run("fist connection", func(t *testing.T) {
+		td, user1ws := NewTestDriverAfterConnection()
 
-		user1WS := sockets.NewFakeWebSocket()
-		user1Data := socket_shared.UserData{
-			Id:    1,
-			Email: "bob@email.com",
-		}
-		manager.ServeWS(user1WS, user1Data)
-
-		_, messageToSend1, _ := user1WS.GetNextMessageToWriteUnserialized()
+		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
 		assert.Equal(t, messageToSend1.Type, client.HELLO)
 
 		roomName := "newRoom"
@@ -36,20 +82,13 @@ func TestClient(t *testing.T) {
 				"description": "room description",
 			},
 		}
-		jsonMessage, _ := json.Marshal(message)
 
-		user1WS.SetNextMessageToRead(socket_shared.TextMessage, []byte(jsonMessage), nil)
-		user1WS.ReadMessage()
+		td.SetMessageToRead(user1ws, message)
+		_, messageToSend, _ := td.GetNextMessageToWrite(user1ws)
 
-		_, messageToSend, _ := user1WS.GetNextMessageToWriteUnserialized()
-
-		fmt.Println("____", messageToSend)
-
-		manager.CloseEveryClientConnections()
+		td.Close()
 		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
 		assert.Equal(t, messageToSend.Content["name"], roomName)
-		// to display fmts
-		// t.Fail()
 
 	})
 }
