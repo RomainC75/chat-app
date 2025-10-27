@@ -44,15 +44,13 @@ func (m *Manager) RemoveClient(client *client.Client) {
 	m.clients.Delete(client)
 }
 
-func (m *Manager) SendBroadcastMessage(msgIn client.MessageIn) {
-	wsMessage := client.MessageOut{
-		Type:    client.NEW_BROADCAST_MESSAGE,
-		Content: msgIn.Content,
-	}
+func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn client.MessageIn) {
+
+	bMessage := client.CreateBroadcastMessageOut(userData, msgIn.Content["message"])
 	m.clients.Range(func(key, value interface{}) bool {
 		client := key.(*client.Client)
 		fmt.Println("send.....")
-		client.SendToClient(wsMessage)
+		client.SendToClient(bMessage)
 
 		return true
 	})

@@ -40,14 +40,14 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *sockets.FakeWebS
 	return messageOut
 }
 
-func (td *TestDriver) SetMessageToRead(socket *sockets.FakeWebSocket, messageIn client.MessageIn) {
+func (td *TestDriver) SetMessageClientToServer(socket *sockets.FakeWebSocket, messageIn client.MessageIn) {
 	jsonMessage, _ := json.Marshal(messageIn)
 	socket.SetNextMessageToRead(socket_shared.TextMessage, []byte(jsonMessage), nil)
 	socket.ReadMessage()
 
 }
 
-func (td *TestDriver) GetNextMessageToWrite(socket *sockets.FakeWebSocket) (int, client.MessageOut, error) {
+func (td *TestDriver) GetNextMessageToWriteToClient(socket *sockets.FakeWebSocket) (int, client.MessageOut, error) {
 	messageType, p, err := socket.GetNextMessageToWrite()
 	if err != nil {
 		return 0, client.MessageOut{}, err
@@ -83,12 +83,29 @@ func TestClient(t *testing.T) {
 			},
 		}
 
-		td.SetMessageToRead(user1ws, message)
-		_, messageToSend, _ := td.GetNextMessageToWrite(user1ws)
+		td.SetMessageClientToServer(user1ws, message)
+		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
 
 		td.Close()
 		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
 		assert.Equal(t, messageToSend.Content["name"], roomName)
 
+	})
+
+	t.Run("broadcastMessage", func(t *testing.T) {
+		td, user1ws := NewTestDriverAfterConnection()
+
+		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
+		assert.Equal(t, messageToSend1.Type, client.HELLO)
+
+		message := "broadcast_message content"
+		messageIn := client.CreateBroadcastMessageIn(message)
+
+		td.SetMessageClientToServer(user1ws, messageIn)
+		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
+
+		td.Close()
+		assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
+		assert.Equal(t, messageToSend.Content["message"], message)
 	})
 }

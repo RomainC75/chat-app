@@ -12,7 +12,7 @@ import (
 
 type IManager interface {
 	RemoveClient(*Client)
-	SendBroadcastMessage(msgIn MessageIn)
+	SendBroadcastMessage(userData socket_shared.UserData, msgIn MessageIn)
 	SendRoomMessage(msgIn MessageIn)
 	CreateRoom(c *Client, roomName string)
 }
@@ -73,10 +73,11 @@ func (c *Client) GoListen() {
 }
 
 func (c *Client) GoWrite() {
-	helloMessage, _ := CreateMessageOut(HELLO, map[string]string{
+	helloMessage := CreateMessageOut(HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
-	c.conn.WriteMessage(socket_shared.TextMessage, helloMessage)
+	bMessageOut, _ := json.Marshal(helloMessage)
+	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
 	go func() {
 		defer func() {
 			c.manager.RemoveClient(c)
@@ -103,7 +104,8 @@ func (c *Client) HandleMessageIn(msg MessageIn) {
 	fmt.Println("msg", msg.Type, msg.Content["name"])
 	switch msg.Type {
 	case BROADCAST_MESSAGE:
-		c.manager.SendBroadcastMessage(msg)
+		fmt.Println("BROADCAST : ", msg)
+		c.manager.SendBroadcastMessage(c.user, msg)
 	case ROOM_MESSAGE:
 		c.manager.SendRoomMessage(msg)
 	case CREATE_ROOM:
