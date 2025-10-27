@@ -60,7 +60,7 @@ func (c *Client) GoListen() {
 					c.manager.RemoveClient(c)
 
 				}
-				fmt.Println("-> Message ", string(payload))
+				fmt.Println("----------> Message ", string(payload))
 				message, err := UnMarshallMessageIn(payload)
 				if err != nil {
 					slog.Error("-> client : error unMarshalling the payload")
@@ -73,12 +73,14 @@ func (c *Client) GoListen() {
 }
 
 func (c *Client) GoWrite() {
+	helloMessage, _ := CreateMessageOut(HELLO, map[string]string{
+		"message": "readyToCommunicate :-)",
+	})
+	c.conn.WriteMessage(socket_shared.TextMessage, helloMessage)
 	go func() {
 		defer func() {
 			c.manager.RemoveClient(c)
 		}()
-
-		c.conn.WriteMessage(socket_shared.TextMessage, []byte("readyToCommunicate :-)"))
 
 		for {
 			message, ok := <-c.egress
@@ -98,14 +100,14 @@ func (c *Client) GoWrite() {
 }
 
 func (c *Client) HandleMessageIn(msg MessageIn) {
-	fmt.Println("msg", msg.Type, msg.Content["roomName"])
+	fmt.Println("msg", msg.Type, msg.Content["name"])
 	switch msg.Type {
 	case BROADCAST_MESSAGE:
 		c.manager.SendBroadcastMessage(msg)
 	case ROOM_MESSAGE:
 		c.manager.SendRoomMessage(msg)
 	case CREATE_ROOM:
-		c.manager.CreateRoom(c, msg.Content["roomName"])
+		c.manager.CreateRoom(c, msg.Content["name"])
 	default:
 		return
 	}

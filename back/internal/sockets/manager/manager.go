@@ -75,3 +75,10 @@ func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	}
 	c.SendToClient(msg)
 }
+
+func (m *Manager) CloseEveryClientConnections() {
+	m.clients.Range(func(key, value any) bool {
+		key.(*client.Client).PrepareToBeDeleted()
+		return true
+	})
+}

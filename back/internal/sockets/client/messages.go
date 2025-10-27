@@ -38,6 +38,7 @@ type MessageOut struct {
 type MessageOutType string
 
 const (
+	HELLO                  MessageOutType = "HELLO"
 	NEW_ROOM_MESSAGE       MessageOutType = "NEW_ROOM_MESSAGE"
 	NEW_BROADCAST_MESSAGE  MessageOutType = "NEW_BROADCAST_MESSAGE"
 	MEMBER_JOINED          MessageOutType = "MEMBER_JOINED"
@@ -48,3 +49,11 @@ const (
 )
 
 //
+
+func CreateMessageOut(mType MessageOutType, content map[string]string) ([]byte, error) {
+	mo := MessageOut{
+		Type:    mType,
+		Content: content,
+	}
+	return json.Marshal(mo)
+}

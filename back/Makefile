@@ -10,4 +10,8 @@ sqlc:
 test:
 	go test -v -cover ./...
 
+testsum:
+	gotestsum --watch --format testname -- -v ./... 
+
+
 .PHONY: migrateup migratedown sqlc test
