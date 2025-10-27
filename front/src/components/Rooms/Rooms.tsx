@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -24,29 +24,24 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import "./Rooms.scss";
-import useWebSocket from "react-use-websocket";
-import { EWsMessageOut, type IwebSocketMessageIn, type IwebSocketMessageOut } from "../../types/socket.type";
 
-interface Room {
-  id: string;
-  name: string;
-  description?: string;
-  memberCount: number;
-  isPrivate: boolean;
-  createdAt: Date;
-  lastActivity: Date;
-}
+import { EWsMessageOut, type IwebSocketMessageOut } from "../../types/socket.type";
+import { useSocket } from "../../hooks/socket.hook";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store/store";
+import Room from "../Room/Room";
+
 
 interface RoomsProps {
   onRoomSelect?: (roomId: string) => void;
 }
 
 const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
-    const token = localStorage.getItem("token")!
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-    console.log("->W socker url ", SOCKET_URL)
+    const {sendWsMessage} = useSocket();
+    const {availableRooms, publicRoom, privateRoom} = useSelector((state: RootState)=>
+        state.chat
+    )
 
-  const [rooms, setRooms] = useState<Room[]>([]);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
@@ -54,29 +49,6 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
   const [joinRoomCode, setJoinRoomCode] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { sendMessage: sendWsMessage, lastMessage } =
-    useWebSocket<IwebSocketMessageIn>(
-      `${SOCKET_URL}/api/chat/ws?token=${token}`
-    );
-
-  useEffect(() => {
-    const mockRooms: Room[] = [
-      {
-        id: "1",
-        name: "General Chat",
-        description: "General discussion for everyone",
-        memberCount: 24,
-        isPrivate: false,
-        createdAt: new Date("2024-01-15"),
-        lastActivity: new Date(),
-      },
-    ];
-    setRooms(mockRooms);
-  }, []);
-
-  useEffect(()=>{
-    console.log("-> lastM : ", lastMessage)
-  }, [lastMessage])
 
   const handleCreateRoom = async () => {
     const msg: IwebSocketMessageOut = {
@@ -125,6 +97,10 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
   };
 
   return (
+    <>
+    {
+        privateRoom ? <Room id={privateRoom.id} name={privateRoom.name}/> : <div></div>
+    }
     <Container maxWidth="lg" className="rooms-container">
       <Box className="rooms-header">
         <Typography variant="h4" component="h1" gutterBottom>
@@ -151,7 +127,7 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
       </Box>
 
       <Grid container spacing={3} className="rooms-grid">
-        {rooms.map((room) => (
+        {availableRooms.map((room) => (
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={room.id}>
             <Card
               className="room-card"
@@ -298,6 +274,7 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
         </DialogActions>
       </Dialog>
     </Container>
+    </>
   );
 };
 

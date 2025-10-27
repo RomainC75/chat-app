@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { fetchLoginUser, fetchSignupUser, fetchVerify } from "../../api/user.api";
+import { fetchLoginUser, fetchSignupUser, fetchVerify } from "../../api/auth.api";
 import type { TLoginResponse, TLoginsUser, TSignupUser, TVerifyResponse } from "../../types/user.type";
 
 
