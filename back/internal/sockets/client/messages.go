@@ -13,8 +13,8 @@ func UnMarshallMessageIn(payload []byte) (MessageIn, error) {
 
 // IN
 type MessageIn struct {
-	Type    MessageInType
-	Content map[string]string
+	Type    MessageInType     `json:"type"`
+	Content map[string]string `json:"content"`
 }
 
 type MessageInType string
@@ -31,8 +31,8 @@ const (
 // OUT
 
 type MessageOut struct {
-	Type    MessageOutType
-	Content map[string]string
+	Type    MessageOutType    `json:"type"`
+	Content map[string]string `json:"content"`
 }
 
 type MessageOutType string

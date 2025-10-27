@@ -37,19 +37,20 @@ interface RoomInfo {
 }
 
 interface RoomProps {
-  roomId?: string
+  id: string
+  name: string
   onBack?: () => void
   currentUser?: {
     id: string
     email: string
-    name: string
   }
 }
 
 const Room: React.FC<RoomProps> = ({ 
-  roomId = "1", 
+  id,
+  name, 
   onBack,
-  currentUser = { id: "user1", email: "current@user.com", name: "Current User" }
+  currentUser = { id: "user1", email: "current@user.com" }
 }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -59,65 +60,6 @@ const Room: React.FC<RoomProps> = ({
   const inputRef = useRef<HTMLInputElement>(null)
 
   
-  useEffect(() => {
-    const mockRoomInfo: RoomInfo = {
-      id: roomId,
-      name: "General Chat",
-      memberCount: 12,
-      description: "Welcome to the general discussion room!"
-    }
-
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        content: 'Hey everyone! Welcome to the chat room.',
-        userId: 'user2',
-        userEmail: 'alice@example.com',
-        userName: 'Alice Johnson',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30),
-        isOwnMessage: false
-      },
-      {
-        id: '2',
-        content: 'Thanks! Excited to be here 🎉',
-        userId: 'user3',
-        userEmail: 'bob@example.com',
-        userName: 'Bob Smith',
-        timestamp: new Date(Date.now() - 1000 * 60 * 25),
-        isOwnMessage: false
-      },
-      {
-        id: '3',
-        content: 'This is a great platform for team collaboration.',
-        userId: currentUser.id,
-        userEmail: currentUser.email,
-        userName: currentUser.name,
-        timestamp: new Date(Date.now() - 1000 * 60 * 20),
-        isOwnMessage: true
-      },
-      {
-        id: '4',
-        content: 'Absolutely! The real-time messaging works perfectly.',
-        userId: 'user4',
-        userEmail: 'carol@example.com',
-        userName: 'Carol Davis',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15),
-        isOwnMessage: false
-      },
-      {
-        id: '5',
-        content: 'Has anyone tried the file sharing feature yet?',
-        userId: 'user2',
-        userEmail: 'alice@example.com',
-        userName: 'Alice Johnson',
-        timestamp: new Date(Date.now() - 1000 * 60 * 10),
-        isOwnMessage: false
-      }
-    ]
-
-    setRoomInfo(mockRoomInfo)
-    setMessages(mockMessages)
-  }, [roomId, currentUser])
 
   
   useEffect(() => {
@@ -207,6 +149,7 @@ const Room: React.FC<RoomProps> = ({
 
   return (
     <div className="room-container">
+      <h2>{id} - {name}</h2>
       {/* Room Header */}
       <AppBar position="static" className="room-header" elevation={0}>
         <Toolbar>

@@ -92,8 +92,8 @@ func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	msg := client.MessageOut{
 		Type: client.ROOM_CREATED,
 		Content: map[string]string{
-			"roomName": roomName,
-			"roomId":   uuid.String(),
+			"name": roomName,
+			"id":   uuid.String(),
 		},
 	}
 	c.SendToClient(msg)
