@@ -2,6 +2,7 @@ package room
 
 import (
 	"chat/internal/sockets/client"
+	socket_shared "chat/internal/sockets/shared"
 	"sync"
 	"time"
 
@@ -28,4 +29,16 @@ func NewRoom(c *client.Client) (uuid.UUID, *Room) {
 
 func (r *Room) AddClient(c *client.Client) {
 	r.clients.Store(c, true)
+}
+
+func (r *Room) GetClients() []socket_shared.UserData {
+	clients := []socket_shared.UserData{}
+	r.clients.Range(func(key, value any) bool {
+		client := key.(*client.Client)
+		userData := client.GetUserData()
+		clients = append(clients, userData)
+		return true
+	})
+
+	return clients
 }

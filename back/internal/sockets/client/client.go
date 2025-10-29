@@ -114,3 +114,7 @@ func (c *Client) HandleMessageIn(msg MessageIn) {
 		return
 	}
 }
+
+func (c *Client) GetUserData() socket_shared.UserData {
+	return c.user
+}

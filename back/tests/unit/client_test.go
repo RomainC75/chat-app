@@ -6,6 +6,7 @@ import (
 	"chat/internal/sockets/manager"
 	socket_shared "chat/internal/sockets/shared"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,7 +63,14 @@ func (td *TestDriver) Close() {
 	td.manager.CloseEveryClientConnections()
 }
 
-func (td *TestDriver) ConnectNewUser(id int32, email string) {
+func (td *TestDriver) ConnectNewUser(id int32, email string) *sockets.FakeWebSocket {
+	usersocket := sockets.NewFakeWebSocket()
+	userData := socket_shared.UserData{
+		Id:    1,
+		Email: "bob@email.com",
+	}
+	td.manager.ServeWS(usersocket, userData)
+	return usersocket
 }
 
 // --------
@@ -86,17 +94,16 @@ func TestClient(t *testing.T) {
 		td.SetMessageClientToServer(user1ws, message)
 		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
 
+		fmt.Println("xxxxxxxxxxxxxxxxxxxx", td.manager.GetRoomUsers())
+
 		td.Close()
 		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
-		assert.Equal(t, messageToSend.Content["name"], roomName)
+		assert.Equal(t, messageToSend.Content["nam"], roomName)
 
 	})
 
 	t.Run("broadcastMessage", func(t *testing.T) {
 		td, user1ws := NewTestDriverAfterConnection()
-
-		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
-		assert.Equal(t, messageToSend1.Type, client.HELLO)
 
 		message := "broadcast_message content"
 		messageIn := client.CreateBroadcastMessageIn(message)
@@ -108,4 +115,26 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
 		assert.Equal(t, messageToSend.Content["message"], message)
 	})
+
+	// t.Run("room message", func(t *testing.T) {
+	// 	td, user1ws := NewTestDriverAfterConnection()
+
+	// 	roomName := "newRoom"
+	// 	message := client.MessageIn{
+	// 		Type: client.CREATE_ROOM,
+	// 		Content: map[string]string{
+	// 			"name":        roomName,
+	// 			"description": "room description",
+	// 		},
+	// 	}
+
+	// 	td.SetMessageClientToServer(user1ws, messageIn)
+	// 	_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
+
+	// 	user2ws := td.ConnectNewUser(2, "newUser@email.com")
+
+	// 	td.Close()
+	// 	assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
+	// 	assert.Equal(t, messageToSend.Content["message"], message)
+	// })
 }

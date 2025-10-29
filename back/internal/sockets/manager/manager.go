@@ -6,6 +6,8 @@ import (
 	socket_shared "chat/internal/sockets/shared"
 	"fmt"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Manager struct {
@@ -79,4 +81,16 @@ func (m *Manager) CloseEveryClientConnections() {
 		key.(*client.Client).PrepareToBeDeleted()
 		return true
 	})
+}
+
+func (m *Manager) GetRoomUsers() map[uuid.UUID][]socket_shared.UserData {
+	listMap := map[uuid.UUID][]socket_shared.UserData{}
+
+	m.rooms.Range(func(key, value any) bool {
+		r := value.(*room.Room)
+
+		listMap[key.(uuid.UUID)] = r.GetClients()
+		return true
+	})
+	return listMap
 }
