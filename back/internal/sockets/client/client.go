@@ -53,7 +53,7 @@ func (c *Client) GoListen() {
 			select {
 			case <-c.ctx.Done():
 				return
-			case rawMessageIn := <-c.conn.ReadMessage():
+			case rawMessageIn := <-c.conn.ReadChan():
 				err := rawMessageIn.Err
 				payload := rawMessageIn.P
 				// messageType := rawMessageIn.MessageType

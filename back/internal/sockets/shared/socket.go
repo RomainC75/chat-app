@@ -8,7 +8,7 @@ type RawMessageIn struct {
 
 type IWebSocket interface {
 	WriteMessage(messageType int, data []byte) error
-	ReadMessage() chan (RawMessageIn)
+	ReadChan() chan (RawMessageIn)
 }
 
 // copied from gorilla/websocket to purify the socket domain

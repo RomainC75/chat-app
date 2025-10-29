@@ -59,6 +59,7 @@ func (td *TestDriver) SetMessageClientToServer(socket *websocket.FakeWebSocket, 
 }
 
 func (td *TestDriver) GetNextMessageToWriteToClient(socket *websocket.FakeWebSocket) (int, client.MessageOut, error) {
+	socket.GetWG().Wait()
 	messageType, p, err := socket.GetNextMessageToWrite()
 	if err != nil {
 		return 0, client.MessageOut{}, err
@@ -81,6 +82,12 @@ func (td *TestDriver) ConnectNewUser(id int32, email string) *websocket.FakeWebS
 	}
 	td.manager.ServeWS(usersocket, userData)
 	return usersocket
+}
+
+func (td *TestDriver) WaitForClientsToSendMessage(sockets ...*websocket.FakeWebSocket) {
+	for i := 0; i < len(sockets); i++ {
+		sockets[i].WaitAdd()
+	}
 }
 
 // --------
@@ -109,7 +116,6 @@ func TestClient(t *testing.T) {
 		td.SetMessageClientToServer(user1ws, message)
 		// ! -> set Add in the client supposed to return somethin !!!
 		user1ws.WaitAdd()
-		user1ws.GetWG().Wait()
 		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
 
 		fmt.Println("---> messageToSend", messageToSend)
@@ -126,12 +132,9 @@ func TestClient(t *testing.T) {
 
 		message := "broadcast_message content"
 		messageIn := client.CreateBroadcastMessageIn(message)
-		td.SetMessageClientToServer(user1ws, messageIn)
 
-		user1ws.WaitAdd()
-		user2ws.WaitAdd()
-		user1ws.GetWG().Wait()
-		user2ws.GetWG().Wait()
+		td.WaitForClientsToSendMessage(user1ws, user2ws)
+		td.SetMessageClientToServer(user1ws, messageIn)
 
 		_, messageToSendToUser1, _ := td.GetNextMessageToWriteToClient(user1ws)
 		_, messageToSendToUser2, _ := td.GetNextMessageToWriteToClient(user2ws)
@@ -139,9 +142,11 @@ func TestClient(t *testing.T) {
 		fmt.Println("+++ ", messageToSendToUser1)
 		fmt.Println("+++ ", messageToSendToUser2)
 
-		td.Close()
+		// td.Close()
 		assert.Equal(t, messageToSendToUser1.Type, client.NEW_BROADCAST_MESSAGE)
 		assert.Equal(t, messageToSendToUser1.Content["message"], message)
+		assert.Equal(t, messageToSendToUser2.Type, client.NEW_BROADCAST_MESSAGE)
+		assert.Equal(t, messageToSendToUser2.Content["message"], message)
 	})
 
 	// t.Run("room message", func(t *testing.T) {
