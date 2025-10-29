@@ -32,6 +32,16 @@ func NewTestDriverAfterConnection() (*TestDriver, *websocket.FakeWebSocket) {
 	}, user1socket
 }
 
+func (td *TestDriver) CreateNewClient(id int32, email string) *websocket.FakeWebSocket {
+	newUserSocket := websocket.NewFakeWebSocket()
+	newUserData := socket_shared.UserData{
+		Id:    1,
+		Email: "bob@email.com",
+	}
+	td.manager.ServeWS(newUserSocket, newUserData)
+	return newUserSocket
+}
+
 func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *websocket.FakeWebSocket) client.MessageOut {
 	_, p, _ := socket.GetNextMessageToWrite()
 
@@ -80,7 +90,6 @@ func TestClient(t *testing.T) {
 		td, user1ws := NewTestDriverAfterConnection()
 
 		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
-		fmt.Println("TEST first message ? ", messageToSend1)
 		assert.Equal(t, messageToSend1.Type, client.HELLO)
 	})
 	t.Run("create room", func(t *testing.T) {
@@ -106,25 +115,34 @@ func TestClient(t *testing.T) {
 		fmt.Println("---> messageToSend", messageToSend)
 		fmt.Println("xxxxxxxxxxxxxxxxxxxx", td.manager.GetRoomUsers())
 
-		td.Close()
+		// td.Close()
 		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
 		assert.Equal(t, messageToSend.Content["name"], roomName)
-
 	})
 
-	// t.Run("broadcastMessage", func(t *testing.T) {
-	// 	td, user1ws := NewTestDriverAfterConnection()
+	t.Run("broadcastMessage", func(t *testing.T) {
+		td, user1ws := NewTestDriverAfterConnection()
+		user2ws := td.CreateNewClient(2, "bob@gmail.com")
 
-	// 	message := "broadcast_message content"
-	// 	messageIn := client.CreateBroadcastMessageIn(message)
+		message := "broadcast_message content"
+		messageIn := client.CreateBroadcastMessageIn(message)
+		td.SetMessageClientToServer(user1ws, messageIn)
 
-	// 	td.SetMessageClientToServer(user1ws, messageIn)
-	// 	_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
+		user1ws.WaitAdd()
+		user2ws.WaitAdd()
+		user1ws.GetWG().Wait()
+		user2ws.GetWG().Wait()
 
-	// 	td.Close()
-	// 	assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
-	// 	assert.Equal(t, messageToSend.Content["message"], message)
-	// })
+		_, messageToSendToUser1, _ := td.GetNextMessageToWriteToClient(user1ws)
+		_, messageToSendToUser2, _ := td.GetNextMessageToWriteToClient(user2ws)
+
+		fmt.Println("+++ ", messageToSendToUser1)
+		fmt.Println("+++ ", messageToSendToUser2)
+
+		td.Close()
+		assert.Equal(t, messageToSendToUser1.Type, client.NEW_BROADCAST_MESSAGE)
+		assert.Equal(t, messageToSendToUser1.Content["message"], message)
+	})
 
 	// t.Run("room message", func(t *testing.T) {
 	// 	td, user1ws := NewTestDriverAfterConnection()
