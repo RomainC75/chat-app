@@ -3,8 +3,24 @@ package websocket
 import (
 	socket_shared "chat/internal/sockets/shared"
 	"context"
+	"fmt"
+	"net/http"
 
 	"github.com/gorilla/websocket"
+)
+
+var (
+	websocketUpgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			// origin := r.Header.Get("Origin")
+			// cfg := config.Get()
+			// frontUrl := cfg.Front.Host
+			// return origin == frontUrl
+			return true
+		},
+	}
 )
 
 type WebSocket struct {
@@ -14,7 +30,12 @@ type WebSocket struct {
 	cancel   context.CancelFunc
 }
 
-func NewWebSocket(conn *websocket.Conn) *WebSocket {
+func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
+	conn, err := websocketUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	fws := &WebSocket{
@@ -24,7 +45,7 @@ func NewWebSocket(conn *websocket.Conn) *WebSocket {
 		cancel:   cancel,
 	}
 	fws.listenToNewMessages()
-	return fws
+	return fws, nil
 }
 
 func (fws *WebSocket) listenToNewMessages() {
@@ -51,6 +72,7 @@ func (fws *WebSocket) ReadMessage() chan (socket_shared.RawMessageIn) {
 }
 
 func (fws *WebSocket) WriteMessage(messageType int, data []byte) error {
+	fmt.Println("-------> message to SEND BACK: ", string(data))
 	return fws.conn.WriteMessage(socket_shared.TextMessage, data)
 }
 

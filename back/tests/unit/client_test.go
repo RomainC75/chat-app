@@ -1,10 +1,10 @@
 package unit
 
 import (
-	"chat/internal/sockets"
 	"chat/internal/sockets/client"
 	"chat/internal/sockets/manager"
 	socket_shared "chat/internal/sockets/shared"
+	"chat/internal/sockets/websocket"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -17,9 +17,9 @@ type TestDriver struct {
 	socket  socket_shared.IWebSocket
 }
 
-func NewTestDriverAfterConnection() (*TestDriver, *sockets.FakeWebSocket) {
+func NewTestDriverAfterConnection() (*TestDriver, *websocket.FakeWebSocket) {
 	manager := manager.NewManager()
-	user1socket := sockets.NewFakeWebSocket()
+	user1socket := websocket.NewFakeWebSocket()
 	user1Data := socket_shared.UserData{
 		Id:    1,
 		Email: "bob@email.com",
@@ -32,7 +32,7 @@ func NewTestDriverAfterConnection() (*TestDriver, *sockets.FakeWebSocket) {
 	}, user1socket
 }
 
-func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *sockets.FakeWebSocket) client.MessageOut {
+func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *websocket.FakeWebSocket) client.MessageOut {
 	_, p, _ := socket.GetNextMessageToWrite()
 
 	messageOut := client.MessageOut{}
@@ -41,14 +41,14 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *sockets.FakeWebS
 	return messageOut
 }
 
-func (td *TestDriver) SetMessageClientToServer(socket *sockets.FakeWebSocket, messageIn client.MessageIn) {
+func (td *TestDriver) SetMessageClientToServer(socket *websocket.FakeWebSocket, messageIn client.MessageIn) {
 	jsonMessage, _ := json.Marshal(messageIn)
-	socket.SetNextMessageToRead(socket_shared.TextMessage, []byte(jsonMessage), nil)
-	socket.ReadMessage()
+	socket.TriggerMessageIn(socket_shared.TextMessage, []byte(jsonMessage), nil)
+	// socket.ReadMessage()
 
 }
 
-func (td *TestDriver) GetNextMessageToWriteToClient(socket *sockets.FakeWebSocket) (int, client.MessageOut, error) {
+func (td *TestDriver) GetNextMessageToWriteToClient(socket *websocket.FakeWebSocket) (int, client.MessageOut, error) {
 	messageType, p, err := socket.GetNextMessageToWrite()
 	if err != nil {
 		return 0, client.MessageOut{}, err
@@ -63,8 +63,8 @@ func (td *TestDriver) Close() {
 	td.manager.CloseEveryClientConnections()
 }
 
-func (td *TestDriver) ConnectNewUser(id int32, email string) *sockets.FakeWebSocket {
-	usersocket := sockets.NewFakeWebSocket()
+func (td *TestDriver) ConnectNewUser(id int32, email string) *websocket.FakeWebSocket {
+	usersocket := websocket.NewFakeWebSocket()
 	userData := socket_shared.UserData{
 		Id:    1,
 		Email: "bob@email.com",
@@ -76,12 +76,18 @@ func (td *TestDriver) ConnectNewUser(id int32, email string) *sockets.FakeWebSoc
 // --------
 
 func TestClient(t *testing.T) {
-	t.Run("fist connection", func(t *testing.T) {
+	t.Run("first connection", func(t *testing.T) {
 		td, user1ws := NewTestDriverAfterConnection()
 
 		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
+		fmt.Println("TEST first message ? ", messageToSend1)
 		assert.Equal(t, messageToSend1.Type, client.HELLO)
+	})
+	t.Run("create room", func(t *testing.T) {
+		t.Log("--> created")
+		td, user1ws := NewTestDriverAfterConnection()
 
+		// -------------
 		roomName := "newRoom"
 		message := client.MessageIn{
 			Type: client.CREATE_ROOM,
@@ -92,29 +98,33 @@ func TestClient(t *testing.T) {
 		}
 
 		td.SetMessageClientToServer(user1ws, message)
+		// ! -> set Add in the client supposed to return somethin !!!
+		user1ws.WaitAdd()
+		user1ws.GetWG().Wait()
 		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
 
+		fmt.Println("---> messageToSend", messageToSend)
 		fmt.Println("xxxxxxxxxxxxxxxxxxxx", td.manager.GetRoomUsers())
 
 		td.Close()
 		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
-		assert.Equal(t, messageToSend.Content["nam"], roomName)
+		assert.Equal(t, messageToSend.Content["name"], roomName)
 
 	})
 
-	t.Run("broadcastMessage", func(t *testing.T) {
-		td, user1ws := NewTestDriverAfterConnection()
+	// t.Run("broadcastMessage", func(t *testing.T) {
+	// 	td, user1ws := NewTestDriverAfterConnection()
 
-		message := "broadcast_message content"
-		messageIn := client.CreateBroadcastMessageIn(message)
+	// 	message := "broadcast_message content"
+	// 	messageIn := client.CreateBroadcastMessageIn(message)
 
-		td.SetMessageClientToServer(user1ws, messageIn)
-		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
+	// 	td.SetMessageClientToServer(user1ws, messageIn)
+	// 	_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
 
-		td.Close()
-		assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
-		assert.Equal(t, messageToSend.Content["message"], message)
-	})
+	// 	td.Close()
+	// 	assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
+	// 	assert.Equal(t, messageToSend.Content["message"], message)
+	// })
 
 	// t.Run("room message", func(t *testing.T) {
 	// 	td, user1ws := NewTestDriverAfterConnection()

@@ -53,8 +53,10 @@ func (c *Client) GoListen() {
 			select {
 			case <-c.ctx.Done():
 				return
-			default:
-				_, payload, err := c.conn.ReadMessage()
+			case rawMessageIn := <-c.conn.ReadMessage():
+				err := rawMessageIn.Err
+				payload := rawMessageIn.P
+				// messageType := rawMessageIn.MessageType
 				if err != nil {
 					slog.Error("client disconnected", err.Error())
 					c.manager.RemoveClient(c)
@@ -73,11 +75,7 @@ func (c *Client) GoListen() {
 }
 
 func (c *Client) GoWrite() {
-	helloMessage := CreateMessageOut(HELLO, map[string]string{
-		"message": "readyToCommunicate :-)",
-	})
-	bMessageOut, _ := json.Marshal(helloMessage)
-	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+	c.writeHelloMessage()
 	go func() {
 		defer func() {
 			c.manager.RemoveClient(c)
@@ -98,6 +96,14 @@ func (c *Client) GoWrite() {
 			log.Println("message sent")
 		}
 	}()
+}
+
+func (c *Client) writeHelloMessage() {
+	helloMessage := CreateMessageOut(HELLO, map[string]string{
+		"message": "readyToCommunicate :-)",
+	})
+	bMessageOut, _ := json.Marshal(helloMessage)
+	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
 }
 
 func (c *Client) HandleMessageIn(msg MessageIn) {

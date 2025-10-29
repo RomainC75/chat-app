@@ -3,26 +3,10 @@ package controllers
 import (
 	"chat/internal/sockets/manager"
 	socket_shared "chat/internal/sockets/shared"
+	"chat/internal/sockets/websocket"
 	"chat/utils/encrypt"
 	"fmt"
-	"log/slog"
 	"net/http"
-
-	"github.com/gorilla/websocket"
-)
-
-var (
-	websocketUpgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			// origin := r.Header.Get("Origin")
-			// cfg := config.Get()
-			// frontUrl := cfg.Front.Host
-			// return origin == frontUrl
-			return true
-		},
-	}
 )
 
 type ChatCtrl struct {
@@ -55,12 +39,11 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 		Email: userEmail.(string),
 	}
 
-	conn, err := websocketUpgrader.Upgrade(w, r, nil)
+	websocket, err := websocket.NewWebSocket(w, r)
 	if err != nil {
-		slog.Error("--> ERROR ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	sc.manager.ServeWS(conn, userData)
+	sc.manager.ServeWS(websocket, userData)
 
 }

@@ -2,8 +2,8 @@ package websocket
 
 import (
 	socket_shared "chat/internal/sockets/shared"
+	"fmt"
 	"sync"
-	"time"
 )
 
 type FakeWebSocket struct {
@@ -19,9 +19,12 @@ type FakeWebSocket struct {
 }
 
 func NewFakeWebSocket() *FakeWebSocket {
+	wg := &sync.WaitGroup{}
+	// hello message
+	wg.Add(1)
 	return &FakeWebSocket{
 		readChan: make(chan (socket_shared.RawMessageIn)),
-		wg:       &sync.WaitGroup{},
+		wg:       wg,
 	}
 }
 
@@ -31,18 +34,17 @@ func (fws *FakeWebSocket) TriggerMessageIn(messageType int, p []byte, err error)
 		P:           p,
 		Err:         err,
 	}
-	fws.wg.Add(1)
 	fws.readChan <- rmi
+}
 
+func (fws *FakeWebSocket) WaitAdd() {
+	fws.wg.Add(1)
 }
 
 func (fws *FakeWebSocket) ReadMessage() chan (socket_shared.RawMessageIn) {
+	fmt.Println("read message")
 	fws.wg.Wait()
 	return fws.readChan
-}
-
-func (fws *FakeWebSocket) MessageInTreated() {
-	fws.wg.Done()
 }
 
 func (fws *FakeWebSocket) GetWG() *sync.WaitGroup {
@@ -50,12 +52,14 @@ func (fws *FakeWebSocket) GetWG() *sync.WaitGroup {
 }
 
 func (fws *FakeWebSocket) WriteMessage(messageType int, data []byte) error {
+	fmt.Println("-> websocket : write ")
+	fws.wg.Done()
 	fws.nextMessageTypeToWrite = messageType
 	fws.nextMessageToWrite = data
 
 	return nil
 }
 func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, err error) {
-	time.Sleep(time.Microsecond * 150)
+	// time.Sleep(time.Microsecond * 150)
 	return fws.nextMessageType, fws.nextMessageToWrite, nil
 }
