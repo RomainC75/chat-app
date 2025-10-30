@@ -7,6 +7,7 @@ import (
 	socket_shared "chat/internal/sockets/shared"
 	"chat/internal/sockets/websocket"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -100,6 +101,21 @@ func TestClient(t *testing.T) {
 		td.Close()
 	})
 
+	t.Run("error message if wrong type", func(t *testing.T) {
+		td, user1ws := NewTestDriverAndConnectUser1()
+
+		message := client.BuildMessageIn("xxxxx", map[string]string{})
+
+		td.AddWaitToSelectedSockets(user1ws)
+		td.TriggerMessageIn(user1ws, message)
+		_, messageToSend, _ := td.WaitForNextMessageOut(user1ws)
+		fmt.Println("--> ", messageToSend)
+
+		assert.Equal(t, messageToSend.Type, client.ERROR)
+
+		td.Close()
+	})
+
 	t.Run("users get notification when new user is connected", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
@@ -129,12 +145,13 @@ func TestClient(t *testing.T) {
 	t.Run("broadcast message", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
+		// user 2 connects to the app
 		td.AddWaitToSelectedSockets(user1ws)
 		user2ws := td.CreateNewClient(2, "bob@gmail.com")
 
+		// user1 send a broadcast message
 		message := "broadcast_message content"
-		messageIn := client.CreateBroadcastMessageIn(message)
-
+		messageIn := client.BuildBroadcastMessageIn(message)
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		td.TriggerMessageIn(user1ws, messageIn)
 
@@ -148,7 +165,7 @@ func TestClient(t *testing.T) {
 		td.Close()
 	})
 
-	t.Run("users get notification whet a user creates a room", func(t *testing.T) {
+	t.Run("users get notification when a user creates a room", func(t *testing.T) {
 		t.Log("--> created")
 		td, user1ws := NewTestDriverAndConnectUser1()
 
@@ -161,14 +178,9 @@ func TestClient(t *testing.T) {
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		t.Log("--> created")
 		roomName := "newRoom"
-		message := client.MessageIn{
-			Type: client.CREATE_ROOM,
-			Content: map[string]string{
-				"name":        roomName,
-				"description": "room description",
-			},
-		}
-		td.TriggerMessageIn(user1ws, message)
+		createRoomMessage := client.BuildACreateRoomMessageIn(roomName, "room description")
+
+		td.TriggerMessageIn(user1ws, createRoomMessage)
 		_, messageOutUser1, _ := td.WaitForNextMessageOut(user1ws)
 		_, messageOutUser2, _ := td.WaitForNextMessageOut(user2ws)
 
@@ -179,54 +191,32 @@ func TestClient(t *testing.T) {
 		// verify user2 response
 		assert.Equal(t, messageOutUser2.Type, client.ROOM_CREATED)
 		assert.Equal(t, messageOutUser2.Content["room_name"], roomName)
+		newRoomIdStr := messageOutUser1.Content["room_id"]
+		_, err := uuid.Parse(newRoomIdStr)
+		assert.Nil(t, err)
 		var connectedClients []socket_shared.UserData
-		err := json.Unmarshal([]byte(messageOutUser2.Content["clients"]), &connectedClients)
+		err = json.Unmarshal([]byte(messageOutUser2.Content["clients"]), &connectedClients)
 		assert.Nil(t, err)
 		assert.Equal(t, connectedClients[0].Id, int32(1))
 
+		// user2 tries to connect to the room
+		// connectToRoomMessage := client.BuildConnectToRoomMessageIn(newRoomIdStr)
+		// td.AddWaitToSelectedSockets(user1ws, user2ws)
+		// td.TriggerMessageIn(user2ws, connectToRoomMessage)
+		// _, messageToSendToUser1, _ := td.WaitForNextMessageOut(user1ws)
+		// _, messageToSendToUser2, _ := td.WaitForNextMessageOut(user2ws)
+		// fmt.Println("+++", messageToSendToUser1)
+		// fmt.Println("+++", messageToSendToUser2)
+		// assert.Equal(t, 1, 2)
+
+		// connectToRoomMessage := client.BuildConnectToRoomMessageIn()
+
+		// user1 gets notification about the user2 connection
+
+		// user2 sends a message in the room
+
+		// user1 and user2 get the message
+
 		td.Close()
 	})
-
-	// t.Run("room message", func(t *testing.T) {
-	// 	td, user1ws := NewTestDriverAndConnectUser1()
-	// 	user2ws := td.CreateNewClient(2, "newUser@email.com")
-
-	// 	roomName := "newRoom"
-	// 	messageIn := client.MessageIn{
-	// 		Type: client.CREATE_ROOM,
-	// 		Content: map[string]string{
-	// 			"name":        roomName,
-	// 			"description": "room description",
-	// 		},
-	// 	}
-
-	// 	td.AddWaitToSelectedSockets(user1ws)
-	// 	td.AddWaitToSelectedSockets(user2ws)
-
-	// 	td.TriggerMessageIn(user1ws, messageIn)
-	// 	_, messageToSendToUser1, _ := td.WaitForNextMessageOut(user1ws)
-	// 	roomIdStr := messageToSendToUser1.Content["room_id"]
-	// 	fmt.Println("----> TO SEND TO 1 : ", messageToSendToUser1)
-
-	// 	// td.TriggerMessageIn(user2ws, messageIn)
-	// 	_, messageToSendToUser2, _ := td.WaitForNextMessageOut(user2ws)
-	// 	// roomIdStr := messageToSend.Content["room_id"]
-	// 	fmt.Println("----> TO SEND TO 2: ", messageToSendToUser2)
-
-	// 	// get new room by id
-	// 	assert.NotEqual(t, "", roomIdStr)
-	// 	roomBasicData, err := td.GetRoomData(uuid.MustParse(roomIdStr))
-	// 	fmt.Println("---> roombBasicData : ", roomBasicData)
-	// 	assert.Nil(t, err)
-
-	// 	assert.Equal(t, roomBasicData.Uuid.String(), messageToSendToUser2.Content["room_id"])
-
-	// 	// td.AddWaitToSelectedSockets(user1ws)
-	// 	// td.TriggerMessageIn(user1ws, messageIn)
-	// 	// _, messageToSend, _ = td.WaitForNextMessageOut(user1ws)
-
-	// 	td.Close()
-	// 	// assert.Equal(t, messageToSendToUser1.Type, client.NEW_BROADCAST_MESSAGE)
-	// 	// assert.Equal(t, messageToSendToUser1.Content["message"], messageIn)
-	// })
 }

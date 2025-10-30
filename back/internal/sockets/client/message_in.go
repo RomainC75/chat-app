@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateMessageIn(mType MessageInType, content map[string]string) MessageIn {
+func BuildMessageIn(mType MessageInType, content map[string]string) MessageIn {
 	mi := MessageIn{
 		Type:    mType,
 		Content: content,
@@ -12,15 +12,28 @@ func CreateMessageIn(mType MessageInType, content map[string]string) MessageIn {
 	return mi
 }
 
-func CreateBroadcastMessageIn(message string) MessageIn {
-	return CreateMessageIn(BROADCAST_MESSAGE, map[string]string{
+func BuildBroadcastMessageIn(message string) MessageIn {
+	return BuildMessageIn(BROADCAST_MESSAGE, map[string]string{
 		"message": message,
 	})
 }
 
-func CreateRoomMessageIn(roomId uuid.UUID, message string) MessageIn {
-	return CreateMessageIn(ROOM_MESSAGE, map[string]string{
+func BuildRoomMessageIn(roomId uuid.UUID, message string) MessageIn {
+	return BuildMessageIn(ROOM_MESSAGE, map[string]string{
 		"message": message,
 		"room_id": roomId.String(),
+	})
+}
+
+func BuildACreateRoomMessageIn(roomName string, description string) MessageIn {
+	return BuildMessageIn(CREATE_ROOM, map[string]string{
+		"name":        roomName,
+		"description": description,
+	})
+}
+
+func BuildConnectToRoomMessageIn(roomId string) MessageIn {
+	return BuildMessageIn(CONNECT_TO_ROOM, map[string]string{
+		"id": roomId,
 	})
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateMessageOut(mType MessageOutType, content map[string]string) MessageOut {
+func BuildMessageOut(mType MessageOutType, content map[string]string) MessageOut {
 	mo := MessageOut{
 		Type:    mType,
 		Content: content,
@@ -16,32 +16,32 @@ func CreateMessageOut(mType MessageOutType, content map[string]string) MessageOu
 	return mo
 }
 
-func CreateNewMemberConnectedMessageOut(senderUserData socket_shared.UserData) MessageOut {
-	return CreateMessageOut(NEW_MEMBER_CONNECTED, map[string]string{
+func BuildNewMemberConnectedMessageOut(senderUserData socket_shared.UserData) MessageOut {
+	return BuildMessageOut(NEW_MEMBER_CONNECTED, map[string]string{
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),
 		"user_email": senderUserData.Email,
 	})
 }
 
-func CreateBroadcastMessageOut(senderUserData socket_shared.UserData, message string) MessageOut {
-	return CreateMessageOut(NEW_BROADCAST_MESSAGE, map[string]string{
+func BuildBroadcastMessageOut(senderUserData socket_shared.UserData, message string) MessageOut {
+	return BuildMessageOut(NEW_BROADCAST_MESSAGE, map[string]string{
 		"message":    message,
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),
 		"user_email": senderUserData.Email,
 	})
 }
 
-func CreateNewRoomNotificationMessageOut(roomName string, roomId uuid.UUID, clients []socket_shared.UserData) MessageOut {
+func BuildNewRoomNotificationMessageOut(roomName string, roomId uuid.UUID, clients []socket_shared.UserData) MessageOut {
 	clientsJson, _ := json.Marshal(clients)
-	return CreateMessageOut(ROOM_CREATED, map[string]string{
+	return BuildMessageOut(ROOM_CREATED, map[string]string{
 		"room_name": roomName,
 		"room_id":   roomId.String(),
 		"clients":   string(clientsJson),
 	})
 }
 
-func CreateRoomMessageOut(senderUserData socket_shared.UserData, roomId uuid.UUID, message string) MessageOut {
-	return CreateMessageOut(NEW_ROOM_MESSAGE, map[string]string{
+func BuildRoomMessageOut(senderUserData socket_shared.UserData, roomId uuid.UUID, message string) MessageOut {
+	return BuildMessageOut(NEW_ROOM_MESSAGE, map[string]string{
 		"message":    message,
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),
 		"user_email": senderUserData.Email,

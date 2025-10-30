@@ -49,4 +49,5 @@ const (
 	ROOM_CREATED           MessageOutType = "ROOM_CREATED"
 	CONNECTED_TO_ROOM      MessageOutType = "CONNECTED_TO_ROOM"
 	DISCONNECTED_FROM_ROOM MessageOutType = "DISCONNECTED_FROM_ROOM"
+	ERROR                  MessageOutType = "ERROR"
 )

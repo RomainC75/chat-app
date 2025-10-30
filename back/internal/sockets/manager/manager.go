@@ -38,7 +38,7 @@ func (m *Manager) ServeWS(conn socket_shared.IWebSocket, userData socket_shared.
 func (m *Manager) AddClient(c *client.Client) {
 	c.GoListen()
 	c.GoWrite()
-	m.Broadcast(client.CreateNewMemberConnectedMessageOut(c.GetUserData()))
+	m.Broadcast(client.BuildNewMemberConnectedMessageOut(c.GetUserData()))
 	m.clients.Store(c, true)
 }
 
@@ -48,7 +48,7 @@ func (m *Manager) RemoveClient(client *client.Client) {
 }
 
 func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn client.MessageIn) {
-	bMessage := client.CreateBroadcastMessageOut(userData, msgIn.Content["message"])
+	bMessage := client.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
 	m.clients.Range(func(client *client.Client, value bool) bool {
 		fmt.Println("send.....")
 		client.SendToClient(bMessage)
@@ -72,7 +72,7 @@ func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	uuid, room := room.NewRoom(roomName, c)
 	m.rooms.Store(room, true)
 	clients := room.GetClients()
-	msg := client.CreateNewRoomNotificationMessageOut(roomName, uuid, clients)
+	msg := client.BuildNewRoomNotificationMessageOut(roomName, uuid, clients)
 	m.Broadcast(msg)
 }
 

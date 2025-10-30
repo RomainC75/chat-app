@@ -98,14 +98,6 @@ func (c *Client) GoWrite() {
 	}()
 }
 
-func (c *Client) writeHelloMessage() {
-	helloMessage := CreateMessageOut(HELLO, map[string]string{
-		"message": "readyToCommunicate :-)",
-	})
-	bMessageOut, _ := json.Marshal(helloMessage)
-	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
-}
-
 func (c *Client) HandleMessageIn(msg MessageIn) {
 	switch msg.Type {
 	case BROADCAST_MESSAGE:
@@ -115,10 +107,27 @@ func (c *Client) HandleMessageIn(msg MessageIn) {
 	case CREATE_ROOM:
 		c.manager.CreateRoom(c, msg.Content["name"])
 	default:
+		c.writeErrorMessage()
 		return
 	}
 }
 
 func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
+}
+
+func (c *Client) writeHelloMessage() {
+	helloMessage := BuildMessageOut(HELLO, map[string]string{
+		"message": "readyToCommunicate :-)",
+	})
+	bMessageOut, _ := json.Marshal(helloMessage)
+	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+}
+
+func (c *Client) writeErrorMessage() {
+	badRequestMessage := BuildMessageOut(ERROR, map[string]string{
+		"message": "bad request",
+	})
+	bMessageOut, _ := json.Marshal(badRequestMessage)
+	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
 }
