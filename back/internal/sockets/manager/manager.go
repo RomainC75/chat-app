@@ -4,6 +4,7 @@ import (
 	"chat/internal/sockets/client"
 	"chat/internal/sockets/room"
 	socket_shared "chat/internal/sockets/shared"
+	typedsyncmap "chat/utils/typedSyncMap"
 	"errors"
 	"fmt"
 	"sync"
@@ -13,14 +14,14 @@ import (
 
 type Manager struct {
 	rooms   sync.Map
-	clients sync.Map
+	clients *typedsyncmap.TSyncMap[*client.Client, bool]
 	m       *sync.RWMutex
 }
 
 func NewManager() *Manager {
 	manager := Manager{
 		rooms:   sync.Map{},
-		clients: sync.Map{},
+		clients: typedsyncmap.NewSyncMap[*client.Client, bool](),
 		m:       &sync.RWMutex{},
 	}
 	return &manager
@@ -46,21 +47,17 @@ func (m *Manager) RemoveClient(client *client.Client) {
 
 func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn client.MessageIn) {
 	bMessage := client.CreateBroadcastMessageOut(userData, msgIn.Content["message"])
-	m.clients.Range(func(key, value interface{}) bool {
-		client := key.(*client.Client)
+	m.clients.Range(func(client *client.Client, value bool) bool {
 		fmt.Println("send.....")
 		client.SendToClient(bMessage)
-
 		return true
 	})
 }
 
 func (m *Manager) Broadcast(msgOut client.MessageOut) {
-	m.clients.Range(func(key, value interface{}) bool {
-		client := key.(*client.Client)
+	m.clients.Range(func(client *client.Client, value bool) bool {
 		fmt.Println(".............................. BROADCAST", msgOut)
 		client.SendToClient(msgOut)
-
 		return true
 	})
 }
@@ -79,8 +76,8 @@ func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 }
 
 func (m *Manager) CloseEveryClientConnections() {
-	m.clients.Range(func(key, value any) bool {
-		key.(*client.Client).PrepareToBeDeleted()
+	m.clients.Range(func(client *client.Client, value bool) bool {
+		client.PrepareToBeDeleted()
 		return true
 	})
 }
