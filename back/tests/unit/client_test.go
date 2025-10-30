@@ -120,13 +120,7 @@ func TestClient(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
 		roomName := "newRoom"
-		message := client.MessageIn{
-			Type: client.CREATE_ROOM,
-			Content: map[string]string{
-				"name":        roomName,
-				"description": "room description",
-			},
-		}
+		message := client.BuildACreateRoomMessageIn(roomName, "room descritpion")
 
 		td.AddWaitToSelectedSockets(user1ws)
 		td.TriggerMessageIn(user1ws, message)
@@ -166,7 +160,6 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("users get notification when a user creates a room", func(t *testing.T) {
-		t.Log("--> created")
 		td, user1ws := NewTestDriverAndConnectUser1()
 
 		// add User2
@@ -176,7 +169,6 @@ func TestClient(t *testing.T) {
 
 		// user1 creates room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
-		t.Log("--> created")
 		roomName := "newRoom"
 		createRoomMessage := client.BuildACreateRoomMessageIn(roomName, "room description")
 
