@@ -29,15 +29,17 @@ func NewManager() *Manager {
 
 func (m *Manager) ServeWS(conn socket_shared.IWebSocket, userData socket_shared.UserData) {
 	// defer conn.Close()
+	fmt.Println("-----> ServeWS", userData)
 	client := client.NewClient(m, conn, userData)
 	m.AddClient(client)
 	// m.NotifyClientStateOfRoomsAndGames(client)
 }
 
-func (m *Manager) AddClient(client *client.Client) {
-	client.GoListen()
-	client.GoWrite()
-	m.clients.Store(client, true)
+func (m *Manager) AddClient(c *client.Client) {
+	c.GoListen()
+	c.GoWrite()
+	m.Broadcast(client.CreateNewMemberConnectedMessageOut(c.GetUserData()))
+	m.clients.Store(c, true)
 }
 
 func (m *Manager) RemoveClient(client *client.Client) {
@@ -71,7 +73,6 @@ func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	m.rooms.Store(room, true)
 	clients := room.GetClients()
 	msg := client.CreateNewRoomNotificationMessageOut(roomName, uuid, clients)
-	// c.SendToClient(msg)
 	m.Broadcast(msg)
 }
 
@@ -80,6 +81,7 @@ func (m *Manager) CloseEveryClientConnections() {
 		client.PrepareToBeDeleted()
 		return true
 	})
+	m.rooms.DeleteAll()
 }
 
 func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {

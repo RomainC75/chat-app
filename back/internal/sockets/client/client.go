@@ -2,7 +2,6 @@ package client
 
 import (
 	socket_shared "chat/internal/sockets/shared"
-	"chat/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -56,18 +55,15 @@ func (c *Client) GoListen() {
 			case rawMessageIn := <-c.conn.GetChan():
 				err := rawMessageIn.Err
 				payload := rawMessageIn.P
-				// messageType := rawMessageIn.MessageType
 				if err != nil {
 					slog.Error("client disconnected", "err", err)
 					c.manager.RemoveClient(c)
-
 				}
 				fmt.Println("----------> Message ", string(payload))
 				message, err := UnMarshallMessageIn(payload)
 				if err != nil {
 					slog.Error("-> client : error unMarshalling the payload")
 				}
-				utils.PrettyDisplay("message in : ", message)
 				c.HandleMessageIn(message)
 			}
 		}
@@ -82,18 +78,22 @@ func (c *Client) GoWrite() {
 		}()
 
 		for {
-			message, ok := <-c.egress
-			if !ok {
-				if err := c.conn.WriteMessage(socket_shared.CloseMessage, nil); err != nil {
-					log.Println("connection closed:", err)
+			select {
+			case <-c.ctx.Done():
+				return
+			case message, ok := <-c.egress:
+				if !ok {
+					if err := c.conn.WriteMessage(socket_shared.CloseMessage, nil); err != nil {
+						log.Println("connection closed:", err)
+					}
+					break
 				}
-				break
-			}
 
-			if err := c.conn.WriteMessage(socket_shared.TextMessage, message); err != nil {
-				log.Printf("failed to send message: %v\n", err)
+				if err := c.conn.WriteMessage(socket_shared.TextMessage, message); err != nil {
+					log.Printf("failed to send message: %v\n", err)
+				}
+				log.Println("message sent")
 			}
-			log.Println("message sent")
 		}
 	}()
 }
@@ -107,10 +107,8 @@ func (c *Client) writeHelloMessage() {
 }
 
 func (c *Client) HandleMessageIn(msg MessageIn) {
-	fmt.Println("msg", msg.Type, msg.Content["name"])
 	switch msg.Type {
 	case BROADCAST_MESSAGE:
-		fmt.Println("BROADCAST : ", msg)
 		c.manager.SendBroadcastMessage(c.user, msg)
 	case ROOM_MESSAGE:
 		c.manager.SendRoomMessage(msg)

@@ -2,7 +2,6 @@ package websocket
 
 import (
 	socket_shared "chat/internal/sockets/shared"
-	"fmt"
 	"sync"
 )
 
@@ -25,6 +24,13 @@ func NewFakeWebSocket() *FakeWebSocket {
 	}
 }
 
+// ? ( 1 create message )
+// ? 2 set wait to the output you want to listen to.
+func (fws *FakeWebSocket) WaitAdd() {
+	fws.wg.Add(1)
+}
+
+// ? 3 write message in the selected socket
 func (fws *FakeWebSocket) TriggerMessageIn(messageType int, p []byte, err error) {
 	rmi := socket_shared.RawMessageIn{
 		MessageType: messageType,
@@ -33,30 +39,22 @@ func (fws *FakeWebSocket) TriggerMessageIn(messageType int, p []byte, err error)
 	}
 	fws.readChan <- rmi
 }
+func (fws *FakeWebSocket) WriteMessage(messageType int, data []byte) error {
+	fws.nextMessageTypeToWrite = messageType
+	fws.nextMessageToWrite = data
+	fws.wg.Done()
+	return nil
+}
 
-func (fws *FakeWebSocket) WaitAdd() {
-	fws.wg.Add(1)
+// ? 4 listen to the answers
+func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, err error) {
+	return fws.nextMessageType, fws.nextMessageToWrite, nil
 }
 
 func (fws *FakeWebSocket) GetChan() chan (socket_shared.RawMessageIn) {
-	fmt.Println("read message")
-	// fws.wg.Wait()
 	return fws.readChan
 }
 
 func (fws *FakeWebSocket) GetWG() *sync.WaitGroup {
 	return fws.wg
-}
-
-func (fws *FakeWebSocket) WriteMessage(messageType int, data []byte) error {
-	fmt.Println("-> websocket : write ")
-	fws.wg.Done()
-	fws.nextMessageTypeToWrite = messageType
-	fws.nextMessageToWrite = data
-
-	return nil
-}
-func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, err error) {
-	// time.Sleep(time.Microsecond * 150)
-	return fws.nextMessageType, fws.nextMessageToWrite, nil
 }

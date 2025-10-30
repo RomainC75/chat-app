@@ -36,3 +36,10 @@ func (tsm *TSyncMap[K, V]) Range(f func(key K, value V) bool) {
 		return true
 	})
 }
+
+func (tsm *TSyncMap[K, V]) DeleteAll() {
+	tsm.Range(func(key K, value V) bool {
+		tsm.sm.Delete(key)
+		return true
+	})
+}

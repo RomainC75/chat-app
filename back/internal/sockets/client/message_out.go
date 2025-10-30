@@ -16,6 +16,13 @@ func CreateMessageOut(mType MessageOutType, content map[string]string) MessageOu
 	return mo
 }
 
+func CreateNewMemberConnectedMessageOut(senderUserData socket_shared.UserData) MessageOut {
+	return CreateMessageOut(NEW_MEMBER_CONNECTED, map[string]string{
+		"user_id":    strconv.Itoa(int(senderUserData.Id)),
+		"user_email": senderUserData.Email,
+	})
+}
+
 func CreateBroadcastMessageOut(senderUserData socket_shared.UserData, message string) MessageOut {
 	return CreateMessageOut(NEW_BROADCAST_MESSAGE, map[string]string{
 		"message":    message,
