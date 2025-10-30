@@ -87,6 +87,10 @@ func (td *TestDriver) GetRoomData(uuid uuid.UUID) (room.BasicData, error) {
 // --------
 
 func TestClient(t *testing.T) {
+	// ? 1 addWait to the selected sockets
+	// ? 2 trigger a message in a socket
+	// ? 3 WaitForNextMessageOut
+
 	t.Run("first connection and hello message", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
@@ -144,18 +148,16 @@ func TestClient(t *testing.T) {
 		td.Close()
 	})
 
-	// addWait to the selected sockets
-	// trigger a message in a socket
-	// WaitForNextMessageOut
-
 	t.Run("users get notification whet a user creates a room", func(t *testing.T) {
 		t.Log("--> created")
 		td, user1ws := NewTestDriverAndConnectUser1()
 
+		// add User2
 		td.AddWaitToSelectedSockets(user1ws)
 		user2ws := td.CreateNewClient(2, "bob")
 		td.WaitForNextMessageOut(user1ws)
 
+		// user1 creates room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		t.Log("--> created")
 		roomName := "newRoom"
@@ -167,11 +169,20 @@ func TestClient(t *testing.T) {
 			},
 		}
 		td.TriggerMessageIn(user1ws, message)
-		_, messageToSend, _ := td.WaitForNextMessageOut(user1ws)
-		td.WaitForNextMessageOut(user2ws)
+		_, messageOutUser1, _ := td.WaitForNextMessageOut(user1ws)
+		_, messageOutUser2, _ := td.WaitForNextMessageOut(user2ws)
 
-		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
-		assert.Equal(t, messageToSend.Content["room_name"], roomName)
+		// verify user1 response
+		assert.Equal(t, messageOutUser1.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageOutUser1.Content["room_name"], roomName)
+
+		// verify user2 response
+		assert.Equal(t, messageOutUser2.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageOutUser2.Content["room_name"], roomName)
+		var connectedClients []socket_shared.UserData
+		err := json.Unmarshal([]byte(messageOutUser2.Content["clients"]), &connectedClients)
+		assert.Nil(t, err)
+		assert.Equal(t, connectedClients[0].Id, int32(1))
 
 		td.Close()
 	})
