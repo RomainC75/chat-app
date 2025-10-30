@@ -13,14 +13,14 @@ import (
 )
 
 type Manager struct {
-	rooms   sync.Map
+	rooms   *typedsyncmap.TSyncMap[*room.Room, bool]
 	clients *typedsyncmap.TSyncMap[*client.Client, bool]
 	m       *sync.RWMutex
 }
 
 func NewManager() *Manager {
 	manager := Manager{
-		rooms:   sync.Map{},
+		rooms:   typedsyncmap.NewSyncMap[*room.Room, bool](),
 		clients: typedsyncmap.NewSyncMap[*client.Client, bool](),
 		m:       &sync.RWMutex{},
 	}
@@ -68,7 +68,7 @@ func (m *Manager) SendRoomMessage(msgIn client.MessageIn) {
 
 func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	uuid, room := room.NewRoom(roomName, c)
-	m.rooms.Store(uuid, room)
+	m.rooms.Store(room, true)
 	clients := room.GetClients()
 	msg := client.CreateNewRoomNotificationMessageOut(roomName, uuid, clients)
 	// c.SendToClient(msg)
@@ -84,10 +84,9 @@ func (m *Manager) CloseEveryClientConnections() {
 
 func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	listMap := map[uuid.UUID][]socket_shared.UserData{}
-	m.rooms.Range(func(key, value any) bool {
-		r := value.(*room.Room)
-
-		listMap[key.(uuid.UUID)] = r.GetClients()
+	m.rooms.Range(func(room *room.Room, value bool) bool {
+		basicData := room.GetBasicData()
+		listMap[basicData.Uuid] = room.GetClients()
 		return true
 	})
 	return listMap
@@ -96,8 +95,7 @@ func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 func (m *Manager) GetRoomBasicData(uuid uuid.UUID) (room.BasicData, error) {
 	var res room.BasicData
 	err := errors.New("room not found")
-	m.rooms.Range(func(key, value any) bool {
-		room, _ := value.(*room.Room)
+	m.rooms.Range(func(room *room.Room, value bool) bool {
 		basicData := room.GetBasicData()
 		fmt.Println("-------------TEST uuid : ", basicData.Uuid, uuid)
 		if basicData.Uuid == uuid {
