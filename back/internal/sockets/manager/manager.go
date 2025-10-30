@@ -4,6 +4,7 @@ import (
 	"chat/internal/sockets/client"
 	"chat/internal/sockets/room"
 	socket_shared "chat/internal/sockets/shared"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -26,12 +27,9 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) ServeWS(conn socket_shared.IWebSocket, userData socket_shared.UserData) {
-
 	// defer conn.Close()
-
 	client := client.NewClient(m, conn, userData)
 	m.AddClient(client)
-
 	// m.NotifyClientStateOfRoomsAndGames(client)
 }
 
@@ -47,7 +45,6 @@ func (m *Manager) RemoveClient(client *client.Client) {
 }
 
 func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn client.MessageIn) {
-
 	bMessage := client.CreateBroadcastMessageOut(userData, msgIn.Content["message"])
 	m.clients.Range(func(key, value interface{}) bool {
 		client := key.(*client.Client)
@@ -58,22 +55,27 @@ func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn cl
 	})
 }
 
+func (m *Manager) Broadcast(msgOut client.MessageOut) {
+	m.clients.Range(func(key, value interface{}) bool {
+		client := key.(*client.Client)
+		fmt.Println(".............................. BROADCAST", msgOut)
+		client.SendToClient(msgOut)
+
+		return true
+	})
+}
+
 func (m *Manager) SendRoomMessage(msgIn client.MessageIn) {
 	// send message tot room
 }
 
 func (m *Manager) CreateRoom(c *client.Client, roomName string) {
-	uuid, room := room.NewRoom(c)
+	uuid, room := room.NewRoom(roomName, c)
 	m.rooms.Store(uuid, room)
-
-	msg := client.MessageOut{
-		Type: client.ROOM_CREATED,
-		Content: map[string]string{
-			"name": roomName,
-			"id":   uuid.String(),
-		},
-	}
-	c.SendToClient(msg)
+	clients := room.GetClients()
+	msg := client.CreateNewRoomNotificationMessageOut(roomName, uuid, clients)
+	// c.SendToClient(msg)
+	m.Broadcast(msg)
 }
 
 func (m *Manager) CloseEveryClientConnections() {
@@ -83,9 +85,8 @@ func (m *Manager) CloseEveryClientConnections() {
 	})
 }
 
-func (m *Manager) GetRoomUsers() map[uuid.UUID][]socket_shared.UserData {
+func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	listMap := map[uuid.UUID][]socket_shared.UserData{}
-
 	m.rooms.Range(func(key, value any) bool {
 		r := value.(*room.Room)
 
@@ -93,4 +94,21 @@ func (m *Manager) GetRoomUsers() map[uuid.UUID][]socket_shared.UserData {
 		return true
 	})
 	return listMap
+}
+
+func (m *Manager) GetRoomBasicData(uuid uuid.UUID) (room.BasicData, error) {
+	var res room.BasicData
+	err := errors.New("room not found")
+	m.rooms.Range(func(key, value any) bool {
+		room, _ := value.(*room.Room)
+		basicData := room.GetBasicData()
+		fmt.Println("-------------TEST uuid : ", basicData.Uuid, uuid)
+		if basicData.Uuid == uuid {
+			res = basicData
+			err = nil
+			return false
+		}
+		return true
+	})
+	return res, err
 }

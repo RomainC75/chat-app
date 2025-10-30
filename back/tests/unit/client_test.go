@@ -3,12 +3,14 @@ package unit
 import (
 	"chat/internal/sockets/client"
 	"chat/internal/sockets/manager"
+	"chat/internal/sockets/room"
 	socket_shared "chat/internal/sockets/shared"
 	"chat/internal/sockets/websocket"
 	"encoding/json"
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,6 +92,10 @@ func (td *TestDriver) WaitForClientsToSendMessage(sockets ...*websocket.FakeWebS
 	}
 }
 
+func (td *TestDriver) GetRoomData(uuid uuid.UUID) (room.BasicData, error) {
+	return td.manager.GetRoomBasicData(uuid)
+}
+
 // --------
 
 func TestClient(t *testing.T) {
@@ -98,32 +104,6 @@ func TestClient(t *testing.T) {
 
 		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
 		assert.Equal(t, messageToSend1.Type, client.HELLO)
-	})
-	t.Run("create room", func(t *testing.T) {
-		t.Log("--> created")
-		td, user1ws := NewTestDriverAfterConnection()
-
-		// -------------
-		roomName := "newRoom"
-		message := client.MessageIn{
-			Type: client.CREATE_ROOM,
-			Content: map[string]string{
-				"name":        roomName,
-				"description": "room description",
-			},
-		}
-
-		td.SetMessageClientToServer(user1ws, message)
-		// ! -> set Add in the client supposed to return somethin !!!
-		user1ws.WaitAdd()
-		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
-
-		fmt.Println("---> messageToSend", messageToSend)
-		fmt.Println("xxxxxxxxxxxxxxxxxxxx", td.manager.GetRoomUsers())
-
-		// td.Close()
-		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
-		assert.Equal(t, messageToSend.Content["name"], roomName)
 	})
 
 	t.Run("broadcastMessage", func(t *testing.T) {
@@ -139,9 +119,6 @@ func TestClient(t *testing.T) {
 		_, messageToSendToUser1, _ := td.GetNextMessageToWriteToClient(user1ws)
 		_, messageToSendToUser2, _ := td.GetNextMessageToWriteToClient(user2ws)
 
-		fmt.Println("+++ ", messageToSendToUser1)
-		fmt.Println("+++ ", messageToSendToUser2)
-
 		// td.Close()
 		assert.Equal(t, messageToSendToUser1.Type, client.NEW_BROADCAST_MESSAGE)
 		assert.Equal(t, messageToSendToUser1.Content["message"], message)
@@ -149,25 +126,70 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, messageToSendToUser2.Content["message"], message)
 	})
 
-	// t.Run("room message", func(t *testing.T) {
-	// 	td, user1ws := NewTestDriverAfterConnection()
+	t.Run("create room", func(t *testing.T) {
+		t.Log("--> created")
+		td, user1ws := NewTestDriverAfterConnection()
 
-	// 	roomName := "newRoom"
-	// 	message := client.MessageIn{
-	// 		Type: client.CREATE_ROOM,
-	// 		Content: map[string]string{
-	// 			"name":        roomName,
-	// 			"description": "room description",
-	// 		},
-	// 	}
+		// -------------
+		roomName := "newRoom"
+		message := client.MessageIn{
+			Type: client.CREATE_ROOM,
+			Content: map[string]string{
+				"name":        roomName,
+				"description": "room description",
+			},
+		}
 
-	// 	td.SetMessageClientToServer(user1ws, messageIn)
-	// 	_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
+		td.WaitForClientsToSendMessage(user1ws)
+		td.SetMessageClientToServer(user1ws, message)
 
-	// 	user2ws := td.ConnectNewUser(2, "newUser@email.com")
+		_, messageToSend, _ := td.GetNextMessageToWriteToClient(user1ws)
 
-	// 	td.Close()
-	// 	assert.Equal(t, messageToSend.Type, client.NEW_BROADCAST_MESSAGE)
-	// 	assert.Equal(t, messageToSend.Content["message"], message)
-	// })
+		// td.Close()
+		assert.Equal(t, messageToSend.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageToSend.Content["room_name"], roomName)
+	})
+
+	t.Run("room message", func(t *testing.T) {
+		td, user1ws := NewTestDriverAfterConnection()
+		user2ws := td.ConnectNewUser(2, "newUser@email.com")
+
+		roomName := "newRoom"
+		messageIn := client.MessageIn{
+			Type: client.CREATE_ROOM,
+			Content: map[string]string{
+				"name":        roomName,
+				"description": "room description",
+			},
+		}
+
+		td.WaitForClientsToSendMessage(user1ws)
+		td.WaitForClientsToSendMessage(user2ws)
+
+		td.SetMessageClientToServer(user1ws, messageIn)
+		_, messageToSendToUser1, _ := td.GetNextMessageToWriteToClient(user1ws)
+		roomIdStr := messageToSendToUser1.Content["room_id"]
+		fmt.Println("----> TO SEND TO 1 : ", messageToSendToUser1)
+
+		// td.SetMessageClientToServer(user2ws, messageIn)
+		_, messageToSendToUser2, _ := td.GetNextMessageToWriteToClient(user2ws)
+		// roomIdStr := messageToSend.Content["room_id"]
+		fmt.Println("----> TO SEND TO 2: ", messageToSendToUser2)
+
+		// get new room by id
+		assert.NotEqual(t, "", roomIdStr)
+		roomBasicData, err := td.GetRoomData(uuid.MustParse(roomIdStr))
+		fmt.Println("---> roombBasicData : ", roomBasicData)
+		assert.Nil(t, err)
+
+		assert.Equal(t, roomBasicData.Uuid.String(), messageToSendToUser2.Content["room_id"])
+
+		// td.WaitForClientsToSendMessage(user1ws)
+		// td.SetMessageClientToServer(user1ws, messageIn)
+		// _, messageToSend, _ = td.GetNextMessageToWriteToClient(user1ws)
+
+		td.Close()
+		// assert.Equal(t, messageToSendToUser1.Type, client.NEW_BROADCAST_MESSAGE)
+		// assert.Equal(t, messageToSendToUser1.Content["message"], messageIn)
+	})
 }

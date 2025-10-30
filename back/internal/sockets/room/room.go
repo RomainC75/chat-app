@@ -9,18 +9,26 @@ import (
 	"github.com/google/uuid"
 )
 
+type BasicData struct {
+	Uuid      uuid.UUID
+	Name      string
+	CreatedAt time.Time
+}
 type Room struct {
-	uuid      uuid.UUID
-	createdAt time.Time
+	basicData BasicData
 	clients   sync.Map
 	// messages
 }
 
-func NewRoom(c *client.Client) (uuid.UUID, *Room) {
+func NewRoom(name string, c *client.Client) (uuid.UUID, *Room) {
 	uuid := uuid.New()
+	basicData := BasicData{
+		Uuid:      uuid,
+		Name:      name,
+		CreatedAt: time.Now(),
+	}
 	room := &Room{
-		uuid:      uuid,
-		createdAt: time.Now(),
+		basicData: basicData,
 		clients:   sync.Map{},
 	}
 	room.AddClient(c)
@@ -41,4 +49,8 @@ func (r *Room) GetClients() []socket_shared.UserData {
 	})
 
 	return clients
+}
+
+func (r *Room) GetBasicData() BasicData {
+	return r.basicData
 }

@@ -2,6 +2,7 @@ package client
 
 import (
 	socket_shared "chat/internal/sockets/shared"
+	"encoding/json"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -20,6 +21,15 @@ func CreateBroadcastMessageOut(senderUserData socket_shared.UserData, message st
 		"message":    message,
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),
 		"user_email": senderUserData.Email,
+	})
+}
+
+func CreateNewRoomNotificationMessageOut(roomName string, roomId uuid.UUID, clients []socket_shared.UserData) MessageOut {
+	clientsJson, _ := json.Marshal(clients)
+	return CreateMessageOut(ROOM_CREATED, map[string]string{
+		"room_name": roomName,
+		"room_id":   roomId.String(),
+		"clients":   string(clientsJson),
 	})
 }
 

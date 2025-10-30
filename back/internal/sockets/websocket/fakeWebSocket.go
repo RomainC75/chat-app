@@ -7,10 +7,7 @@ import (
 )
 
 type FakeWebSocket struct {
-	nextMessageType int
-	nextMessage     []byte
-	nextError       error
-
+	nextMessageType        int
 	nextMessageTypeToWrite int
 	nextMessageToWrite     []byte
 
