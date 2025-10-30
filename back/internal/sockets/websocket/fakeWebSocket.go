@@ -38,7 +38,7 @@ func (fws *FakeWebSocket) WaitAdd() {
 	fws.wg.Add(1)
 }
 
-func (fws *FakeWebSocket) ReadChan() chan (socket_shared.RawMessageIn) {
+func (fws *FakeWebSocket) GetChan() chan (socket_shared.RawMessageIn) {
 	fmt.Println("read message")
 	// fws.wg.Wait()
 	return fws.readChan

@@ -13,5 +13,5 @@ func NewErrNotFound(err error) ErrNotFound {
 }
 
 func (nfe ErrNotFound) Error() string {
-	return fmt.Sprintf("Not Found Error: %w", nfe.err)
+	return fmt.Sprintf("Not Found Error: %s", nfe.err)
 }

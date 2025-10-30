@@ -67,7 +67,7 @@ func (fws *WebSocket) listenToNewMessages() {
 	}()
 }
 
-func (fws *WebSocket) ReadMessage() chan (socket_shared.RawMessageIn) {
+func (fws *WebSocket) GetChan() chan (socket_shared.RawMessageIn) {
 	return fws.readChan
 }
 

@@ -10,8 +10,8 @@ func PrettyDisplay(message string, v interface{}) {
 	fmt.Printf("====%s====\n", message)
 	empJSON, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("fatal error : %s", err.Error())
 	}
 	fmt.Println(string(empJSON))
-	fmt.Println("==================================\n")
+	fmt.Println("==================================")
 }

@@ -53,12 +53,12 @@ func (c *Client) GoListen() {
 			select {
 			case <-c.ctx.Done():
 				return
-			case rawMessageIn := <-c.conn.ReadChan():
+			case rawMessageIn := <-c.conn.GetChan():
 				err := rawMessageIn.Err
 				payload := rawMessageIn.P
 				// messageType := rawMessageIn.MessageType
 				if err != nil {
-					slog.Error("client disconnected", err.Error())
+					slog.Error("client disconnected", "err", err)
 					c.manager.RemoveClient(c)
 
 				}
@@ -91,7 +91,7 @@ func (c *Client) GoWrite() {
 			}
 
 			if err := c.conn.WriteMessage(socket_shared.TextMessage, message); err != nil {
-				log.Println("failed to send message: %v", err)
+				log.Printf("failed to send message: %v\n", err)
 			}
 			log.Println("message sent")
 		}
