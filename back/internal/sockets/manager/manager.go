@@ -13,14 +13,14 @@ import (
 )
 
 type Manager struct {
-	rooms   *typedsyncmap.TSyncMap[*room.Room, bool]
+	rooms   *typedsyncmap.TSyncMap[uuid.UUID, *room.Room]
 	clients *typedsyncmap.TSyncMap[*client.Client, bool]
 	m       *sync.RWMutex
 }
 
 func NewManager() *Manager {
 	manager := Manager{
-		rooms:   typedsyncmap.NewSyncMap[*room.Room, bool](),
+		rooms:   typedsyncmap.NewSyncMap[uuid.UUID, *room.Room](),
 		clients: typedsyncmap.NewSyncMap[*client.Client, bool](),
 		m:       &sync.RWMutex{},
 	}
@@ -70,9 +70,10 @@ func (m *Manager) SendRoomMessage(msgIn client.MessageIn) {
 
 func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	uuid, room := room.NewRoom(roomName, c)
-	m.rooms.Store(room, true)
+	m.rooms.Store(uuid, room)
 	clients := room.GetClients()
-	msg := client.BuildNewRoomNotificationMessageOut(roomName, uuid, clients)
+	msg := client.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
+	// ! connectUserAndRoom()
 	m.Broadcast(msg)
 }
 
@@ -86,7 +87,7 @@ func (m *Manager) CloseEveryClientConnections() {
 
 func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	listMap := map[uuid.UUID][]socket_shared.UserData{}
-	m.rooms.Range(func(room *room.Room, value bool) bool {
+	m.rooms.Range(func(uuid uuid.UUID, room *room.Room) bool {
 		basicData := room.GetBasicData()
 		listMap[basicData.Uuid] = room.GetClients()
 		return true
@@ -94,13 +95,13 @@ func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	return listMap
 }
 
-func (m *Manager) GetRoomBasicData(uuid uuid.UUID) (room.BasicData, error) {
+func (m *Manager) GetRoomBasicData(id uuid.UUID) (room.BasicData, error) {
 	var res room.BasicData
 	err := errors.New("room not found")
-	m.rooms.Range(func(room *room.Room, value bool) bool {
+	m.rooms.Range(func(uuid uuid.UUID, room *room.Room) bool {
 		basicData := room.GetBasicData()
 		fmt.Println("-------------TEST uuid : ", basicData.Uuid, uuid)
-		if basicData.Uuid == uuid {
+		if basicData.Uuid == id {
 			res = basicData
 			err = nil
 			return false
@@ -108,4 +109,14 @@ func (m *Manager) GetRoomBasicData(uuid uuid.UUID) (room.BasicData, error) {
 		return true
 	})
 	return res, err
+}
+
+func (m *Manager) ConnectUserAndRoom(c *client.Client, roomId uuid.UUID) error {
+	foundRoom, ok := m.rooms.Load(roomId)
+	if !ok {
+		return errors.New("room Id not found")
+	}
+	foundRoom.AddClient(c)
+	c.ConnectToRoom(foundRoom)
+	return nil
 }

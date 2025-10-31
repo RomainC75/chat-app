@@ -34,6 +34,6 @@ func BuildACreateRoomMessageIn(roomName string, description string) MessageIn {
 
 func BuildConnectToRoomMessageIn(roomId string) MessageIn {
 	return BuildMessageIn(CONNECT_TO_ROOM, map[string]string{
-		"id": roomId,
+		"room_id": roomId,
 	})
 }

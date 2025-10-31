@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+
+	"github.com/google/uuid"
 )
 
 type IManager interface {
@@ -14,10 +16,17 @@ type IManager interface {
 	SendBroadcastMessage(userData socket_shared.UserData, msgIn MessageIn)
 	SendRoomMessage(msgIn MessageIn)
 	CreateRoom(c *Client, roomName string)
+	ConnectUserAndRoom(c *Client, roomId uuid.UUID) error
+}
+
+type IRoom interface {
+	GetId() uuid.UUID
+	GetClients() []socket_shared.UserData
 }
 
 type Client struct {
 	manager  IManager
+	room     IRoom
 	conn     socket_shared.IWebSocket
 	user     socket_shared.UserData
 	egress   chan ([]byte)
@@ -98,6 +107,10 @@ func (c *Client) GoWrite() {
 	}()
 }
 
+func (c *Client) GetUserData() socket_shared.UserData {
+	return c.user
+}
+
 func (c *Client) HandleMessageIn(msg MessageIn) {
 	switch msg.Type {
 	case BROADCAST_MESSAGE:
@@ -106,14 +119,14 @@ func (c *Client) HandleMessageIn(msg MessageIn) {
 		c.manager.SendRoomMessage(msg)
 	case CREATE_ROOM:
 		c.manager.CreateRoom(c, msg.Content["name"])
+	case CONNECT_TO_ROOM:
+		roomIdStr := msg.Content["room_id"]
+		roomId, _ := uuid.Parse(roomIdStr)
+		_ = c.manager.ConnectUserAndRoom(c, roomId)
 	default:
 		c.writeErrorMessage()
 		return
 	}
-}
-
-func (c *Client) GetUserData() socket_shared.UserData {
-	return c.user
 }
 
 func (c *Client) writeHelloMessage() {
@@ -129,5 +142,13 @@ func (c *Client) writeErrorMessage() {
 		"message": "bad request",
 	})
 	bMessageOut, _ := json.Marshal(badRequestMessage)
+	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+}
+
+func (c *Client) ConnectToRoom(room IRoom) {
+	c.room = room
+	roomUsers := room.GetClients()
+	message := BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
+	bMessageOut, _ := json.Marshal(message)
 	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
 }

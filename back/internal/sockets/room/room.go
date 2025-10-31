@@ -16,7 +16,8 @@ type BasicData struct {
 }
 type Room struct {
 	basicData BasicData
-	clients   sync.Map
+	// TODO sync map
+	clients sync.Map
 	// messages
 }
 
@@ -36,6 +37,8 @@ func NewRoom(name string, c *client.Client) (uuid.UUID, *Room) {
 }
 
 func (r *Room) AddClient(c *client.Client) {
+	notificationMessage := client.BuildNewUserConnectedToRoomMessageOut(c.GetUserData(), r.basicData.Uuid)
+	r.Broadcast(notificationMessage)
 	r.clients.Store(c, true)
 }
 
@@ -47,10 +50,21 @@ func (r *Room) GetClients() []socket_shared.UserData {
 		clients = append(clients, userData)
 		return true
 	})
-
 	return clients
 }
 
 func (r *Room) GetBasicData() BasicData {
 	return r.basicData
+}
+
+func (r *Room) GetId() uuid.UUID {
+	return r.basicData.Uuid
+}
+
+func (r *Room) Broadcast(message client.MessageOut) {
+	r.clients.Range(func(key, value any) bool {
+		c, _ := key.(*client.Client)
+		c.SendToClient(message)
+		return true
+	})
 }

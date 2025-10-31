@@ -8,6 +8,7 @@ import (
 	"chat/internal/sockets/websocket"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
@@ -164,7 +165,9 @@ func TestClient(t *testing.T) {
 
 		// add User2
 		td.AddWaitToSelectedSockets(user1ws)
-		user2ws := td.CreateNewClient(2, "bob")
+		user2Id := int32(2)
+		user2Email := "john@email.com"
+		user2ws := td.CreateNewClient(user2Id, user2Email)
 		td.WaitForNextMessageOut(user1ws)
 
 		// user1 creates room
@@ -173,37 +176,54 @@ func TestClient(t *testing.T) {
 		createRoomMessage := client.BuildACreateRoomMessageIn(roomName, "room description")
 
 		td.TriggerMessageIn(user1ws, createRoomMessage)
-		_, messageOutUser1, _ := td.WaitForNextMessageOut(user1ws)
-		_, messageOutUser2, _ := td.WaitForNextMessageOut(user2ws)
+		_, messageOutToUser1, _ := td.WaitForNextMessageOut(user1ws)
+		_, messageOutToUser2, _ := td.WaitForNextMessageOut(user2ws)
 
 		// verify user1 response
-		assert.Equal(t, messageOutUser1.Type, client.ROOM_CREATED)
-		assert.Equal(t, messageOutUser1.Content["room_name"], roomName)
+		assert.Equal(t, messageOutToUser1.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageOutToUser1.Content["room_name"], roomName)
 
 		// verify user2 response
-		assert.Equal(t, messageOutUser2.Type, client.ROOM_CREATED)
-		assert.Equal(t, messageOutUser2.Content["room_name"], roomName)
-		newRoomIdStr := messageOutUser1.Content["room_id"]
+		assert.Equal(t, messageOutToUser2.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageOutToUser2.Content["room_name"], roomName)
+		newRoomIdStr := messageOutToUser1.Content["room_id"]
 		_, err := uuid.Parse(newRoomIdStr)
 		assert.Nil(t, err)
 		var connectedClients []socket_shared.UserData
-		err = json.Unmarshal([]byte(messageOutUser2.Content["clients"]), &connectedClients)
+		err = json.Unmarshal([]byte(messageOutToUser2.Content["clients"]), &connectedClients)
 		assert.Nil(t, err)
 		assert.Equal(t, connectedClients[0].Id, int32(1))
 
 		// user2 tries to connect to the room
-		// connectToRoomMessage := client.BuildConnectToRoomMessageIn(newRoomIdStr)
-		// td.AddWaitToSelectedSockets(user1ws, user2ws)
-		// td.TriggerMessageIn(user2ws, connectToRoomMessage)
-		// _, messageToSendToUser1, _ := td.WaitForNextMessageOut(user1ws)
-		// _, messageToSendToUser2, _ := td.WaitForNextMessageOut(user2ws)
-		// fmt.Println("+++", messageToSendToUser1)
-		// fmt.Println("+++", messageToSendToUser2)
-		// assert.Equal(t, 1, 2)
+		td.AddWaitToSelectedSockets(user1ws, user2ws)
+		connectToRoomMessage := client.BuildConnectToRoomMessageIn(newRoomIdStr)
+		td.TriggerMessageIn(user2ws, connectToRoomMessage)
+		_, messageOutToUser1, _ = td.WaitForNextMessageOut(user1ws)
+		_, messageOutToUser2, _ = td.WaitForNextMessageOut(user2ws)
 
-		// connectToRoomMessage := client.BuildConnectToRoomMessageIn()
+		fmt.Println("+++ 1", messageOutToUser1)
+		fmt.Println("+++ 2", messageOutToUser2)
 
-		// user1 gets notification about the user2 connection
+		// test message to user1 - should receive a NEW_USER_CONNECTED_TO_ROOM notif
+		assert.Equal(t, client.NEW_USER_CONNECTED_TO_ROOM, messageOutToUser1.Type)
+		user, ok := messageOutToUser1.Content["user"]
+		assert.Equal(t, true, ok)
+		var userData socket_shared.UserData
+		err = json.Unmarshal([]byte(user), &userData)
+		assert.Nil(t, err)
+		assert.Equal(t, int32(2), userData.Id)
+
+		// test message to user2 - should receive a CONNECTED_TO_ROOM notif
+		assert.Equal(t, client.CONNECTED_TO_ROOM, messageOutToUser2.Type)
+		users, ok := messageOutToUser2.Content["users"]
+		assert.Equal(t, true, ok)
+		var connectedUsersData []socket_shared.UserData
+		err = json.Unmarshal([]byte(users), &connectedUsersData)
+		fmt.Println("connectedUsersData : ", connectedUsersData)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, len(connectedUsersData))
+		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud socket_shared.UserData) bool { return ud.Id == 1 }))
+		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud socket_shared.UserData) bool { return ud.Id == 2 }))
 
 		// user2 sends a message in the room
 

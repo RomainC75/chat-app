@@ -31,7 +31,7 @@ func BuildBroadcastMessageOut(senderUserData socket_shared.UserData, message str
 	})
 }
 
-func BuildNewRoomNotificationMessageOut(roomName string, roomId uuid.UUID, clients []socket_shared.UserData) MessageOut {
+func BuildNewRoomCreatedMessageOut(roomName string, roomId uuid.UUID, clients []socket_shared.UserData) MessageOut {
 	clientsJson, _ := json.Marshal(clients)
 	return BuildMessageOut(ROOM_CREATED, map[string]string{
 		"room_name": roomName,
@@ -46,5 +46,21 @@ func BuildRoomMessageOut(senderUserData socket_shared.UserData, roomId uuid.UUID
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),
 		"user_email": senderUserData.Email,
 		"room_id":    roomId.String(),
+	})
+}
+
+func BuildConnectedToRoomMessageOut(roomConnectedUsers []socket_shared.UserData, roomId uuid.UUID) MessageOut {
+	roomConnectedUsersJson, _ := json.Marshal(roomConnectedUsers)
+	return BuildMessageOut(CONNECTED_TO_ROOM, map[string]string{
+		"room_id": roomId.String(),
+		"users":   string(roomConnectedUsersJson),
+	})
+}
+
+func BuildNewUserConnectedToRoomMessageOut(newUser socket_shared.UserData, roomId uuid.UUID) MessageOut {
+	newUserJson, _ := json.Marshal(newUser)
+	return BuildMessageOut(NEW_USER_CONNECTED_TO_ROOM, map[string]string{
+		"room_id": roomId.String(),
+		"user":    string(newUserJson),
 	})
 }

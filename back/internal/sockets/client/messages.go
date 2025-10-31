@@ -40,14 +40,15 @@ type MessageOut struct {
 type MessageOutType string
 
 const (
-	HELLO                  MessageOutType = "HELLO"
-	NEW_ROOM_MESSAGE       MessageOutType = "NEW_ROOM_MESSAGE"
-	NEW_BROADCAST_MESSAGE  MessageOutType = "NEW_BROADCAST_MESSAGE"
-	MEMBER_JOINED          MessageOutType = "MEMBER_JOINED"
-	MEMBER_LEAVED          MessageOutType = "MEMBER_LEAVED"
-	NEW_MEMBER_CONNECTED   MessageOutType = "NEW_MEMBER_CONNECTED"
-	ROOM_CREATED           MessageOutType = "ROOM_CREATED"
-	CONNECTED_TO_ROOM      MessageOutType = "CONNECTED_TO_ROOM"
-	DISCONNECTED_FROM_ROOM MessageOutType = "DISCONNECTED_FROM_ROOM"
-	ERROR                  MessageOutType = "ERROR"
+	HELLO                      MessageOutType = "HELLO"
+	NEW_ROOM_MESSAGE           MessageOutType = "NEW_ROOM_MESSAGE"
+	NEW_BROADCAST_MESSAGE      MessageOutType = "NEW_BROADCAST_MESSAGE"
+	MEMBER_JOINED              MessageOutType = "MEMBER_JOINED"
+	MEMBER_LEAVED              MessageOutType = "MEMBER_LEAVED"
+	NEW_MEMBER_CONNECTED       MessageOutType = "NEW_MEMBER_CONNECTED"
+	ROOM_CREATED               MessageOutType = "ROOM_CREATED"
+	CONNECTED_TO_ROOM          MessageOutType = "CONNECTED_TO_ROOM"
+	NEW_USER_CONNECTED_TO_ROOM MessageOutType = "NEW_USER_CONNECTED_TO_ROOM"
+	DISCONNECTED_FROM_ROOM     MessageOutType = "DISCONNECTED_FROM_ROOM"
+	ERROR                      MessageOutType = "ERROR"
 )
