@@ -187,7 +187,7 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, messageOutToUser2.Type, client.ROOM_CREATED)
 		assert.Equal(t, messageOutToUser2.Content["room_name"], roomName)
 		newRoomIdStr := messageOutToUser1.Content["room_id"]
-		_, err := uuid.Parse(newRoomIdStr)
+		newRoomId, err := uuid.Parse(newRoomIdStr)
 		assert.Nil(t, err)
 		var connectedClients []socket_shared.UserData
 		err = json.Unmarshal([]byte(messageOutToUser2.Content["clients"]), &connectedClients)
@@ -226,8 +226,41 @@ func TestClient(t *testing.T) {
 		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud socket_shared.UserData) bool { return ud.Id == 2 }))
 
 		// user2 sends a message in the room
+		td.AddWaitToSelectedSockets(user1ws, user2ws)
+		privateMessage := "private message"
+		roomMessage := client.BuildRoomMessageIn(newRoomId, privateMessage)
+		td.TriggerMessageIn(user2ws, roomMessage)
+		_, messageOutToUser1, _ = td.WaitForNextMessageOut(user1ws)
+		_, messageOutToUser2, _ = td.WaitForNextMessageOut(user2ws)
 
-		// user1 and user2 get the message
+		fmt.Println("+++ 1", messageOutToUser1)
+		fmt.Println("+++ 2", messageOutToUser2)
+
+		/// test message to user1 - should receive the room message
+		assert.Equal(t, client.NEW_ROOM_MESSAGE, messageOutToUser1.Type)
+		message1, ok := messageOutToUser1.Content["message"]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, privateMessage, message1)
+		roomId1, ok := messageOutToUser1.Content["room_id"]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, newRoomIdStr, roomId1)
+		fromUserEmail, ok := messageOutToUser1.Content["user_email"]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, user2Email, fromUserEmail)
+
+		/// test message to user2 - should receive the room message
+		assert.Equal(t, client.NEW_ROOM_MESSAGE, messageOutToUser2.Type)
+		message2, ok := messageOutToUser2.Content["message"]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, privateMessage, message2)
+		roomId2, ok := messageOutToUser2.Content["room_id"]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, newRoomIdStr, roomId2)
+		fromUserEmail2, ok := messageOutToUser2.Content["user_email"]
+		assert.Equal(t, true, ok)
+		assert.Equal(t, user2Email, fromUserEmail2)
+
+		// assert.Equal(t, 1, 2)
 
 		td.Close()
 	})

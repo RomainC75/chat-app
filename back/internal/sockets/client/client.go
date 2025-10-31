@@ -14,7 +14,7 @@ import (
 type IManager interface {
 	RemoveClient(*Client)
 	SendBroadcastMessage(userData socket_shared.UserData, msgIn MessageIn)
-	SendRoomMessage(msgIn MessageIn)
+	SendRoomMessage(c *Client, roomId string, message string)
 	CreateRoom(c *Client, roomName string)
 	ConnectUserAndRoom(c *Client, roomId uuid.UUID) error
 }
@@ -95,7 +95,7 @@ func (c *Client) GoWrite() {
 					if err := c.conn.WriteMessage(socket_shared.CloseMessage, nil); err != nil {
 						log.Println("connection closed:", err)
 					}
-					break
+					continue
 				}
 
 				if err := c.conn.WriteMessage(socket_shared.TextMessage, message); err != nil {
@@ -116,7 +116,7 @@ func (c *Client) HandleMessageIn(msg MessageIn) {
 	case BROADCAST_MESSAGE:
 		c.manager.SendBroadcastMessage(c.user, msg)
 	case ROOM_MESSAGE:
-		c.manager.SendRoomMessage(msg)
+		c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
 	case CREATE_ROOM:
 		c.manager.CreateRoom(c, msg.Content["name"])
 	case CONNECT_TO_ROOM:

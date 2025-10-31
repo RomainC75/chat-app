@@ -40,7 +40,7 @@ func BuildNewRoomCreatedMessageOut(roomName string, roomId uuid.UUID, clients []
 	})
 }
 
-func BuildRoomMessageOut(senderUserData socket_shared.UserData, roomId uuid.UUID, message string) MessageOut {
+func BuildRoomMessageOut(roomId uuid.UUID, senderUserData socket_shared.UserData, message string) MessageOut {
 	return BuildMessageOut(NEW_ROOM_MESSAGE, map[string]string{
 		"message":    message,
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),

@@ -6,7 +6,6 @@ import (
 	socket_shared "chat/internal/sockets/shared"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -28,8 +27,6 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) ServeWS(conn socket_shared.IWebSocket, userData socket_shared.UserData) {
-	// defer conn.Close()
-	fmt.Println("-----> ServeWS", userData)
 	client := client.NewClient(m, conn, userData)
 	m.AddClient(client)
 	// m.NotifyClientStateOfRoomsAndGames(client)
@@ -50,7 +47,6 @@ func (m *Manager) RemoveClient(client *client.Client) {
 func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn client.MessageIn) {
 	bMessage := client.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
 	m.clients.Range(func(client *client.Client, value bool) bool {
-		fmt.Println("send.....")
 		client.SendToClient(bMessage)
 		return true
 	})
@@ -58,14 +54,23 @@ func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn cl
 
 func (m *Manager) Broadcast(msgOut client.MessageOut) {
 	m.clients.Range(func(client *client.Client, value bool) bool {
-		fmt.Println(".............................. BROADCAST", msgOut)
 		client.SendToClient(msgOut)
 		return true
 	})
 }
 
-func (m *Manager) SendRoomMessage(msgIn client.MessageIn) {
-	// send message tot room
+func (m *Manager) SendRoomMessage(c *client.Client, roomIdStr string, message string) {
+	roomUuid, err := uuid.Parse(roomIdStr)
+	if err != nil {
+		return
+	}
+	foundRoom, err := m.FindRoomById(roomUuid)
+	if err != nil {
+		return
+	}
+	roomMessage := client.BuildRoomMessageOut(roomUuid, c.GetUserData(), message)
+	foundRoom.Broadcast(roomMessage)
+
 }
 
 func (m *Manager) CreateRoom(c *client.Client, roomName string) {
@@ -100,7 +105,6 @@ func (m *Manager) GetRoomBasicData(id uuid.UUID) (room.BasicData, error) {
 	err := errors.New("room not found")
 	m.rooms.Range(func(uuid uuid.UUID, room *room.Room) bool {
 		basicData := room.GetBasicData()
-		fmt.Println("-------------TEST uuid : ", basicData.Uuid, uuid)
 		if basicData.Uuid == id {
 			res = basicData
 			err = nil
@@ -119,4 +123,19 @@ func (m *Manager) ConnectUserAndRoom(c *client.Client, roomId uuid.UUID) error {
 	foundRoom.AddClient(c)
 	c.ConnectToRoom(foundRoom)
 	return nil
+}
+
+func (m *Manager) FindRoomById(roomId uuid.UUID) (*room.Room, error) {
+	var foundRoom *room.Room
+	m.rooms.Range(func(uuid uuid.UUID, room *room.Room) bool {
+		if roomId == uuid {
+			foundRoom = room
+			return false
+		}
+		return true
+	})
+	if foundRoom == nil {
+		return nil, errors.New("room not found")
+	}
+	return foundRoom, nil
 }
