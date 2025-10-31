@@ -1,4 +1,4 @@
-package client
+package messages
 
 import (
 	"github.com/google/uuid"

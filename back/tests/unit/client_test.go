@@ -1,8 +1,8 @@
 package unit
 
 import (
-	"chat/internal/sockets/client"
 	"chat/internal/sockets/manager"
+	"chat/internal/sockets/messages"
 	"chat/internal/sockets/room"
 	socket_shared "chat/internal/sockets/shared"
 	"chat/internal/sockets/websocket"
@@ -44,29 +44,29 @@ func (td *TestDriver) CreateNewClient(id int32, email string) *websocket.FakeWeb
 	return newUserSocket
 }
 
-func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *websocket.FakeWebSocket) client.MessageOut {
+func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *websocket.FakeWebSocket) messages.MessageOut {
 	_, p, _ := socket.GetNextMessageToWrite()
 
-	messageOut := client.MessageOut{}
+	messageOut := messages.MessageOut{}
 	_ = json.Unmarshal(p, &messageOut)
 
 	return messageOut
 }
 
-func (td *TestDriver) TriggerMessageIn(socket *websocket.FakeWebSocket, messageIn client.MessageIn) {
+func (td *TestDriver) TriggerMessageIn(socket *websocket.FakeWebSocket, messageIn messages.MessageIn) {
 	jsonMessage, _ := json.Marshal(messageIn)
 	socket.TriggerMessageIn(socket_shared.TextMessage, []byte(jsonMessage), nil)
 	// socket.ReadMessage()
 
 }
 
-func (td *TestDriver) WaitForNextMessageOut(socket *websocket.FakeWebSocket) (int, client.MessageOut, error) {
+func (td *TestDriver) WaitForNextMessageOut(socket *websocket.FakeWebSocket) (int, messages.MessageOut, error) {
 	socket.GetWG().Wait()
 	messageType, p, err := socket.GetNextMessageToWrite()
 	if err != nil {
-		return 0, client.MessageOut{}, err
+		return 0, messages.MessageOut{}, err
 	}
-	messageOut := client.MessageOut{}
+	messageOut := messages.MessageOut{}
 	err = json.Unmarshal(p, &messageOut)
 	return messageType, messageOut, err
 
@@ -98,21 +98,21 @@ func TestClient(t *testing.T) {
 
 		td.AddWaitToSelectedSockets(user1ws)
 		messageToSend1 := td.GetNextMessageToWriteUnserialized(user1ws)
-		assert.Equal(t, messageToSend1.Type, client.HELLO)
+		assert.Equal(t, messageToSend1.Type, messages.HELLO)
 		td.Close()
 	})
 
 	t.Run("error message if wrong type", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
-		message := client.BuildMessageIn("xxxxx", map[string]string{})
+		message := messages.BuildMessageIn("xxxxx", map[string]string{})
 
 		td.AddWaitToSelectedSockets(user1ws)
 		td.TriggerMessageIn(user1ws, message)
 		_, messageToSend, _ := td.WaitForNextMessageOut(user1ws)
 		fmt.Println("--> ", messageToSend)
 
-		assert.Equal(t, messageToSend.Type, client.ERROR)
+		assert.Equal(t, messageToSend.Type, messages.ERROR)
 
 		td.Close()
 	})
@@ -121,7 +121,7 @@ func TestClient(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
 		roomName := "newRoom"
-		message := client.BuildACreateRoomMessageIn(roomName, "room descritpion")
+		message := messages.BuildACreateRoomMessageIn(roomName, "room descritpion")
 
 		td.AddWaitToSelectedSockets(user1ws)
 		td.TriggerMessageIn(user1ws, message)
@@ -133,7 +133,7 @@ func TestClient(t *testing.T) {
 		td.TriggerMessageIn(user1ws, message)
 		_, messageToSend, _ = td.WaitForNextMessageOut(user1ws)
 
-		assert.Equal(t, messageToSend.Type, client.NEW_MEMBER_CONNECTED)
+		assert.Equal(t, messageToSend.Type, messages.NEW_MEMBER_CONNECTED)
 		td.Close()
 	})
 
@@ -146,16 +146,16 @@ func TestClient(t *testing.T) {
 
 		// user1 send a broadcast message
 		message := "broadcast_message content"
-		messageIn := client.BuildBroadcastMessageIn(message)
+		messageIn := messages.BuildBroadcastMessageIn(message)
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		td.TriggerMessageIn(user1ws, messageIn)
 
 		_, messageToSendToUser1, _ := td.WaitForNextMessageOut(user1ws)
 		_, messageToSendToUser2, _ := td.WaitForNextMessageOut(user2ws)
 
-		assert.Equal(t, messageToSendToUser1.Type, client.NEW_BROADCAST_MESSAGE)
+		assert.Equal(t, messageToSendToUser1.Type, messages.NEW_BROADCAST_MESSAGE)
 		assert.Equal(t, messageToSendToUser1.Content["message"], message)
-		assert.Equal(t, messageToSendToUser2.Type, client.NEW_BROADCAST_MESSAGE)
+		assert.Equal(t, messageToSendToUser2.Type, messages.NEW_BROADCAST_MESSAGE)
 		assert.Equal(t, messageToSendToUser2.Content["message"], message)
 		td.Close()
 	})
@@ -173,18 +173,18 @@ func TestClient(t *testing.T) {
 		// user1 creates room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		roomName := "newRoom"
-		createRoomMessage := client.BuildACreateRoomMessageIn(roomName, "room description")
+		createRoomMessage := messages.BuildACreateRoomMessageIn(roomName, "room description")
 
 		td.TriggerMessageIn(user1ws, createRoomMessage)
 		_, messageOutToUser1, _ := td.WaitForNextMessageOut(user1ws)
 		_, messageOutToUser2, _ := td.WaitForNextMessageOut(user2ws)
 
 		// verify user1 response
-		assert.Equal(t, messageOutToUser1.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageOutToUser1.Type, messages.ROOM_CREATED)
 		assert.Equal(t, messageOutToUser1.Content["room_name"], roomName)
 
 		// verify user2 response
-		assert.Equal(t, messageOutToUser2.Type, client.ROOM_CREATED)
+		assert.Equal(t, messageOutToUser2.Type, messages.ROOM_CREATED)
 		assert.Equal(t, messageOutToUser2.Content["room_name"], roomName)
 		newRoomIdStr := messageOutToUser1.Content["room_id"]
 		newRoomId, err := uuid.Parse(newRoomIdStr)
@@ -196,7 +196,7 @@ func TestClient(t *testing.T) {
 
 		// user2 tries to connect to the room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
-		connectToRoomMessage := client.BuildConnectToRoomMessageIn(newRoomIdStr)
+		connectToRoomMessage := messages.BuildConnectToRoomMessageIn(newRoomIdStr)
 		td.TriggerMessageIn(user2ws, connectToRoomMessage)
 		_, messageOutToUser1, _ = td.WaitForNextMessageOut(user1ws)
 		_, messageOutToUser2, _ = td.WaitForNextMessageOut(user2ws)
@@ -205,7 +205,7 @@ func TestClient(t *testing.T) {
 		fmt.Println("+++ 2", messageOutToUser2)
 
 		// test message to user1 - should receive a NEW_USER_CONNECTED_TO_ROOM notif
-		assert.Equal(t, client.NEW_USER_CONNECTED_TO_ROOM, messageOutToUser1.Type)
+		assert.Equal(t, messages.NEW_USER_CONNECTED_TO_ROOM, messageOutToUser1.Type)
 		user, ok := messageOutToUser1.Content["user"]
 		assert.Equal(t, true, ok)
 		var userData socket_shared.UserData
@@ -214,7 +214,7 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, int32(2), userData.Id)
 
 		// test message to user2 - should receive a CONNECTED_TO_ROOM notif
-		assert.Equal(t, client.CONNECTED_TO_ROOM, messageOutToUser2.Type)
+		assert.Equal(t, messages.CONNECTED_TO_ROOM, messageOutToUser2.Type)
 		users, ok := messageOutToUser2.Content["users"]
 		assert.Equal(t, true, ok)
 		var connectedUsersData []socket_shared.UserData
@@ -228,7 +228,7 @@ func TestClient(t *testing.T) {
 		// user2 sends a message in the room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		privateMessage := "private message"
-		roomMessage := client.BuildRoomMessageIn(newRoomId, privateMessage)
+		roomMessage := messages.BuildRoomMessageIn(newRoomId, privateMessage)
 		td.TriggerMessageIn(user2ws, roomMessage)
 		_, messageOutToUser1, _ = td.WaitForNextMessageOut(user1ws)
 		_, messageOutToUser2, _ = td.WaitForNextMessageOut(user2ws)
@@ -237,7 +237,7 @@ func TestClient(t *testing.T) {
 		fmt.Println("+++ 2", messageOutToUser2)
 
 		/// test message to user1 - should receive the room message
-		assert.Equal(t, client.NEW_ROOM_MESSAGE, messageOutToUser1.Type)
+		assert.Equal(t, messages.NEW_ROOM_MESSAGE, messageOutToUser1.Type)
 		message1, ok := messageOutToUser1.Content["message"]
 		assert.Equal(t, true, ok)
 		assert.Equal(t, privateMessage, message1)
@@ -249,7 +249,7 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, user2Email, fromUserEmail)
 
 		/// test message to user2 - should receive the room message
-		assert.Equal(t, client.NEW_ROOM_MESSAGE, messageOutToUser2.Type)
+		assert.Equal(t, messages.NEW_ROOM_MESSAGE, messageOutToUser2.Type)
 		message2, ok := messageOutToUser2.Content["message"]
 		assert.Equal(t, true, ok)
 		assert.Equal(t, privateMessage, message2)

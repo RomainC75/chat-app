@@ -2,6 +2,7 @@ package manager
 
 import (
 	"chat/internal/sockets/client"
+	"chat/internal/sockets/messages"
 	"chat/internal/sockets/room"
 	socket_shared "chat/internal/sockets/shared"
 	typedsyncmap "chat/utils/typedSyncMap"
@@ -35,7 +36,7 @@ func (m *Manager) ServeWS(conn socket_shared.IWebSocket, userData socket_shared.
 func (m *Manager) AddClient(c *client.Client) {
 	c.GoListen()
 	c.GoWrite()
-	m.Broadcast(client.BuildNewMemberConnectedMessageOut(c.GetUserData()))
+	m.Broadcast(messages.BuildNewMemberConnectedMessageOut(c.GetUserData()))
 	m.clients.Store(c, true)
 }
 
@@ -44,15 +45,15 @@ func (m *Manager) RemoveClient(client *client.Client) {
 	m.clients.Delete(client)
 }
 
-func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn client.MessageIn) {
-	bMessage := client.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
+func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn messages.MessageIn) {
+	bMessage := messages.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
 	m.clients.Range(func(client *client.Client, value bool) bool {
 		client.SendToClient(bMessage)
 		return true
 	})
 }
 
-func (m *Manager) Broadcast(msgOut client.MessageOut) {
+func (m *Manager) Broadcast(msgOut messages.MessageOut) {
 	m.clients.Range(func(client *client.Client, value bool) bool {
 		client.SendToClient(msgOut)
 		return true
@@ -68,7 +69,7 @@ func (m *Manager) SendRoomMessage(c *client.Client, roomIdStr string, message st
 	if err != nil {
 		return
 	}
-	roomMessage := client.BuildRoomMessageOut(roomUuid, c.GetUserData(), message)
+	roomMessage := messages.BuildRoomMessageOut(roomUuid, c.GetUserData(), message)
 	foundRoom.Broadcast(roomMessage)
 
 }
@@ -77,7 +78,7 @@ func (m *Manager) CreateRoom(c *client.Client, roomName string) {
 	uuid, room := room.NewRoom(roomName, c)
 	m.rooms.Store(uuid, room)
 	clients := room.GetClients()
-	msg := client.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
+	msg := messages.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
 	// ! connectUserAndRoom()
 	m.Broadcast(msg)
 }

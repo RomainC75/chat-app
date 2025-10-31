@@ -1,4 +1,4 @@
-package client
+package messages
 
 import (
 	"encoding/json"
@@ -31,7 +31,6 @@ const (
 )
 
 // OUT
-
 type MessageOut struct {
 	Type    MessageOutType    `json:"type"`
 	Content map[string]string `json:"content"`

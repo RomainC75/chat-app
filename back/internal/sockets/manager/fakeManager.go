@@ -1,6 +1,9 @@
 package manager
 
-import "chat/internal/sockets/client"
+import (
+	"chat/internal/sockets/client"
+	"chat/internal/sockets/messages"
+)
 
 type FakeManager struct {
 	clientToAdd *client.Client
@@ -21,10 +24,10 @@ func (m *FakeManager) AddClient(c *client.Client) {
 func (fm *FakeManager) RemoveClient(c *client.Client) {
 
 }
-func (fm *FakeManager) SendBroadcastMessage(msgIn client.MessageIn) {
+func (fm *FakeManager) SendBroadcastMessage(msgIn messages.MessageIn) {
 
 }
-func (fm *FakeManager) SendRoomMessage(msgIn client.MessageIn) {
+func (fm *FakeManager) SendRoomMessage(msgIn messages.MessageIn) {
 
 }
 func (fm *FakeManager) CreateRoom(c *client.Client, roomName string) {

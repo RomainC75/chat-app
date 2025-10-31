@@ -2,6 +2,7 @@ package room
 
 import (
 	"chat/internal/sockets/client"
+	"chat/internal/sockets/messages"
 	socket_shared "chat/internal/sockets/shared"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"time"
@@ -36,7 +37,7 @@ func NewRoom(name string, c *client.Client) (uuid.UUID, *Room) {
 }
 
 func (r *Room) AddClient(c *client.Client) {
-	notificationMessage := client.BuildNewUserConnectedToRoomMessageOut(c.GetUserData(), r.basicData.Uuid)
+	notificationMessage := messages.BuildNewUserConnectedToRoomMessageOut(c.GetUserData(), r.basicData.Uuid)
 	r.Broadcast(notificationMessage)
 	r.clients.Store(c, true)
 }
@@ -59,7 +60,7 @@ func (r *Room) GetId() uuid.UUID {
 	return r.basicData.Uuid
 }
 
-func (r *Room) Broadcast(message client.MessageOut) {
+func (r *Room) Broadcast(message messages.MessageOut) {
 	r.clients.Range(func(c *client.Client, value bool) bool {
 		c.SendToClient(message)
 		return true

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"chat/internal/sockets/messages"
 	socket_shared "chat/internal/sockets/shared"
 	"context"
 	"encoding/json"
@@ -13,7 +14,7 @@ import (
 
 type IManager interface {
 	RemoveClient(*Client)
-	SendBroadcastMessage(userData socket_shared.UserData, msgIn MessageIn)
+	SendBroadcastMessage(userData socket_shared.UserData, msgIn messages.MessageIn)
 	SendRoomMessage(c *Client, roomId string, message string)
 	CreateRoom(c *Client, roomName string)
 	ConnectUserAndRoom(c *Client, roomId uuid.UUID) error
@@ -50,7 +51,7 @@ func (c *Client) PrepareToBeDeleted() {
 	c.cancelFn()
 }
 
-func (c *Client) SendToClient(msg MessageOut) {
+func (c *Client) SendToClient(msg messages.MessageOut) {
 	m, _ := json.Marshal(msg)
 	c.egress <- m
 }
@@ -69,7 +70,7 @@ func (c *Client) GoListen() {
 					c.manager.RemoveClient(c)
 				}
 				fmt.Println("----------> Message ", string(payload))
-				message, err := UnMarshallMessageIn(payload)
+				message, err := messages.UnMarshallMessageIn(payload)
 				if err != nil {
 					slog.Error("-> client : error unMarshalling the payload")
 				}
@@ -111,15 +112,15 @@ func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
 }
 
-func (c *Client) HandleMessageIn(msg MessageIn) {
+func (c *Client) HandleMessageIn(msg messages.MessageIn) {
 	switch msg.Type {
-	case BROADCAST_MESSAGE:
+	case messages.BROADCAST_MESSAGE:
 		c.manager.SendBroadcastMessage(c.user, msg)
-	case ROOM_MESSAGE:
+	case messages.ROOM_MESSAGE:
 		c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
-	case CREATE_ROOM:
+	case messages.CREATE_ROOM:
 		c.manager.CreateRoom(c, msg.Content["name"])
-	case CONNECT_TO_ROOM:
+	case messages.CONNECT_TO_ROOM:
 		roomIdStr := msg.Content["room_id"]
 		roomId, _ := uuid.Parse(roomIdStr)
 		_ = c.manager.ConnectUserAndRoom(c, roomId)
@@ -130,7 +131,7 @@ func (c *Client) HandleMessageIn(msg MessageIn) {
 }
 
 func (c *Client) writeHelloMessage() {
-	helloMessage := BuildMessageOut(HELLO, map[string]string{
+	helloMessage := messages.BuildMessageOut(messages.HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
 	bMessageOut, _ := json.Marshal(helloMessage)
@@ -138,7 +139,7 @@ func (c *Client) writeHelloMessage() {
 }
 
 func (c *Client) writeErrorMessage() {
-	badRequestMessage := BuildMessageOut(ERROR, map[string]string{
+	badRequestMessage := messages.BuildMessageOut(messages.ERROR, map[string]string{
 		"message": "bad request",
 	})
 	bMessageOut, _ := json.Marshal(badRequestMessage)
@@ -148,7 +149,7 @@ func (c *Client) writeErrorMessage() {
 func (c *Client) ConnectToRoom(room IRoom) {
 	c.room = room
 	roomUsers := room.GetClients()
-	message := BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
+	message := messages.BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
 	bMessageOut, _ := json.Marshal(message)
 	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
 }

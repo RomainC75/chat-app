@@ -1,4 +1,4 @@
-package client
+package messages
 
 import (
 	socket_shared "chat/internal/sockets/shared"
