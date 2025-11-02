@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"chat/utils/encrypt"
+	user_management_infra "chat/internal/modules/user-management/infra"
 	"context"
 	"net/http"
 	"strings"
@@ -20,7 +20,7 @@ func AuthMid(next http.Handler) http.Handler {
 		}
 		token = strings.Split(auth_header, " ")[1]
 
-		claim, err := encrypt.GetClaimsFromToken(token)
+		claim, err := user_management_infra.NewInMemoryJWT().GetClaimsFromToken(token)
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusBadRequest)
 			return
