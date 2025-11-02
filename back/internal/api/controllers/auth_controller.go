@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"chat/internal/api/dto/requests"
-	"chat/internal/api/services"
+	repositories "chat/internal/api/repos"
 	validatorHandler "chat/internal/api/validator"
+	user_management_app "chat/internal/modules/user-management/application"
+	user_management_infra "chat/internal/modules/user-management/infra"
 	"chat/utils"
 	"context"
 	"encoding/json"
@@ -18,13 +20,17 @@ type VerifyResposne struct {
 }
 
 type AuthCtrl struct {
-	userSrv   services.UserSrv
+	userSrv   *user_management_app.UserSrv
 	validator *validator.Validate
 }
 
 func NewAuthCtrl() *AuthCtrl {
 	return &AuthCtrl{
-		userSrv:   *services.NewUserSrv(),
+		userSrv: user_management_app.NewUserSrv(
+			repositories.NewUserRepo(),
+			user_management_infra.NewInMemoryUUIDGenerator(),
+			user_management_infra.NewInMemoryClock(),
+		),
 		validator: validatorHandler.GetValidator(),
 	}
 }
