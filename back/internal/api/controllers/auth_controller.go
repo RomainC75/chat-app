@@ -30,6 +30,8 @@ func NewAuthCtrl() *AuthCtrl {
 			repositories.NewUserRepo(),
 			user_management_infra.NewInMemoryUUIDGenerator(),
 			user_management_infra.NewInMemoryClock(),
+			user_management_infra.NewInMemoryBcrypt(),
+			user_management_infra.NewInMemoryJWT(),
 		),
 		validator: validatorHandler.GetValidator(),
 	}

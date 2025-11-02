@@ -1,21 +1,24 @@
 package controllers
 
 import (
+	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
+	user_management_infra "chat/internal/modules/user-management/infra"
 	"chat/internal/sockets/manager"
 	socket_shared "chat/internal/sockets/shared"
 	"chat/internal/sockets/websocket"
-	"chat/utils/encrypt"
 	"fmt"
 	"net/http"
 )
 
 type ChatCtrl struct {
 	manager manager.Manager
+	jwt     user_management_encrypt.JWT
 }
 
 func NewChatCtrl() *ChatCtrl {
 	return &ChatCtrl{
 		manager: *manager.NewManager(),
+		jwt:     user_management_infra.NewInMemoryJWT(),
 	}
 }
 
@@ -25,7 +28,7 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 	if len(tokens) != 1 {
 		http.Error(w, "need a token", http.StatusBadRequest)
 	}
-	claim, err := encrypt.GetClaimsFromToken(tokens[0])
+	claim, err := sc.jwt.GetClaimsFromToken(tokens[0])
 	if err != nil {
 		http.Error(w, "invalid token", http.StatusBadRequest)
 		return
