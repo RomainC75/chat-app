@@ -1,11 +1,11 @@
 package unit
 
 import (
-	"chat/internal/sockets/manager"
-	"chat/internal/sockets/messages"
-	"chat/internal/sockets/room"
-	socket_shared "chat/internal/sockets/shared"
-	"chat/internal/sockets/websocket"
+	"chat/internal/modules/chat/domain/manager"
+	"chat/internal/modules/chat/domain/messages"
+	"chat/internal/modules/chat/domain/room"
+	socket_shared "chat/internal/modules/chat/domain/shared"
+	"chat/internal/modules/chat/domain/websocket"
 	"encoding/json"
 	"fmt"
 	"slices"
