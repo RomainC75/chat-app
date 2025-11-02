@@ -1,13 +1,21 @@
-package encrypt
+package user_management_infra
 
 import (
 	"chat/config"
-	db "chat/db/sqlc"
+	user_management_domain "chat/internal/modules/user-management/domain"
+	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 )
+
+type InMemoryJWT struct {
+}
+
+func NewInMemoryJWT() *InMemoryJWT {
+	return &InMemoryJWT{}
+}
 
 type Claims struct {
 	*jwt.RegisteredClaims
@@ -15,7 +23,7 @@ type Claims struct {
 	Email string
 }
 
-func Generate(user db.User) (string, error) {
+func (JWT *InMemoryJWT) Generate(user *user_management_domain.User) (string, error) {
 	secret := config.Get().Jwt.Secret
 
 	token := jwt.New(jwt.GetSigningMethod("HS256"))
@@ -24,10 +32,10 @@ func Generate(user db.User) (string, error) {
 	token.Claims = &Claims{
 		&jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
-			Subject:   fmt.Sprintf("%d", user.ID),
+			Subject:   fmt.Sprintf("%d", user.GetID().ID()),
 		},
-		user.ID,
-		user.Email,
+		int32(user.GetID().ID()),
+		user.GetEmail(),
 	}
 	val, err := token.SignedString([]byte(secret))
 
@@ -37,7 +45,7 @@ func Generate(user db.User) (string, error) {
 	return val, nil
 }
 
-func GetClaimsFromToken(tokenString string) (jwt.MapClaims, error) {
+func (JWT *InMemoryJWT) GetClaimsFromToken(tokenString string) (user_management_encrypt.JwtClaim, error) {
 	secret := config.Get().Jwt.Secret
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -49,7 +57,7 @@ func GetClaimsFromToken(tokenString string) (jwt.MapClaims, error) {
 		return nil, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
+		return user_management_encrypt.JwtClaim(claims), nil
 	}
 	return nil, err
 }

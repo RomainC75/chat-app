@@ -1,4 +1,4 @@
-package encrypt
+package user_management_infra
 
 import (
 	"log"
@@ -6,7 +6,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func HashAndSalt(pwd string) (string, error){
+type Bcrypt struct {
+}
+
+func NewInMemoryBcrypt() *Bcrypt {
+	return &Bcrypt{}
+}
+
+func (b *Bcrypt) HashAndSalt(pwd string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println(err)
@@ -15,7 +22,7 @@ func HashAndSalt(pwd string) (string, error){
 	return string(hash), nil
 }
 
-func ComparePasswords(hashedPwd string, receivedPwd string) error{
+func (b *Bcrypt) ComparePasswords(hashedPwd string, receivedPwd string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(receivedPwd))
 	if err != nil {
 		return err
