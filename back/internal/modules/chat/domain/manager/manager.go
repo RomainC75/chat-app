@@ -1,10 +1,10 @@
 package manager
 
 import (
-	"chat/internal/sockets/client"
-	"chat/internal/sockets/messages"
-	"chat/internal/sockets/room"
-	socket_shared "chat/internal/sockets/shared"
+	"chat/internal/modules/chat/domain/client"
+	"chat/internal/modules/chat/domain/messages"
+	"chat/internal/modules/chat/domain/room"
+	socket_shared "chat/internal/modules/chat/domain/shared"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"errors"
 	"sync"

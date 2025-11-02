@@ -1,24 +1,24 @@
 package controllers
 
 import (
+	chat_app "chat/internal/modules/chat/application"
+	socket_shared "chat/internal/modules/chat/domain/shared"
+	"chat/internal/modules/chat/domain/websocket"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 	user_management_infra "chat/internal/modules/user-management/infra"
-	"chat/internal/sockets/manager"
-	socket_shared "chat/internal/sockets/shared"
-	"chat/internal/sockets/websocket"
 	"fmt"
 	"net/http"
 )
 
 type ChatCtrl struct {
-	manager manager.Manager
-	jwt     user_management_encrypt.JWT
+	managerSrv *chat_app.ManagerService
+	jwt        user_management_encrypt.JWT
 }
 
 func NewChatCtrl() *ChatCtrl {
 	return &ChatCtrl{
-		manager: *manager.NewManager(),
-		jwt:     user_management_infra.NewInMemoryJWT(),
+		managerSrv: chat_app.NewManagerService(),
+		jwt:        user_management_infra.NewInMemoryJWT(),
 	}
 }
 
@@ -47,6 +47,6 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	sc.manager.ServeWS(websocket, userData)
+	sc.managerSrv.HandleNewConnection(websocket, userData)
 
 }

@@ -1,7 +1,7 @@
 package messages
 
 import (
-	socket_shared "chat/internal/sockets/shared"
+	socket_shared "chat/internal/modules/chat/domain/shared"
 	"encoding/json"
 	"strconv"
 

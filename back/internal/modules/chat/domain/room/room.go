@@ -1,9 +1,9 @@
 package room
 
 import (
-	"chat/internal/sockets/client"
-	"chat/internal/sockets/messages"
-	socket_shared "chat/internal/sockets/shared"
+	"chat/internal/modules/chat/domain/client"
+	"chat/internal/modules/chat/domain/messages"
+	socket_shared "chat/internal/modules/chat/domain/shared"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"time"
 

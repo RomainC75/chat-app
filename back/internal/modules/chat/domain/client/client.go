@@ -1,8 +1,8 @@
 package client
 
 import (
-	"chat/internal/sockets/messages"
-	socket_shared "chat/internal/sockets/shared"
+	"chat/internal/modules/chat/domain/messages"
+	socket_shared "chat/internal/modules/chat/domain/shared"
 	"context"
 	"encoding/json"
 	"fmt"

@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"chat/internal/sockets/client"
-	"chat/internal/sockets/messages"
+	"chat/internal/modules/chat/domain/client"
+	"chat/internal/modules/chat/domain/messages"
 )
 
 type FakeManager struct {
