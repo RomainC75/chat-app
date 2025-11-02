@@ -43,8 +43,8 @@ func (u *User) GetToken(generatorFn func(user *User) (string, error)) (string, e
 	return generatorFn(u)
 }
 
-func (u *User) IsAuthenticated(fn func(hash []byte, password []byte) error, hashPass string) error {
-	return fn([]byte(u.password), []byte(hashPass))
+func (u *User) IsAuthenticated(fn func(hashedPwd string, receivedPwd string) error, hashPass string) error {
+	return fn(u.password, hashPass)
 }
 
 func (u *User) ToSnapshot() UserSnapshot {
