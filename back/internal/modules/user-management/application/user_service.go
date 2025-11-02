@@ -5,12 +5,10 @@ import (
 	custom_errors "chat/internal/api/errors"
 	"chat/internal/api/shared"
 	user_management_domain "chat/internal/modules/user-management/domain"
-	"chat/utils/encrypt"
+	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 
 	"context"
 	"errors"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type LogResponse struct {
@@ -35,13 +33,23 @@ type UserSrv struct {
 	userRepo      user_management_domain.IUsers
 	uuidGenerator shared.UUIDGenerator
 	clock         shared.Clock
+	bcrypt        user_management_encrypt.Bcrypt
+	jwt           user_management_encrypt.JWT
 }
 
-func NewUserSrv(userRepo user_management_domain.IUsers, uuidGenerator shared.UUIDGenerator, clock shared.Clock) *UserSrv {
+func NewUserSrv(
+	userRepo user_management_domain.IUsers,
+	uuidGenerator shared.UUIDGenerator,
+	clock shared.Clock,
+	bcrypt user_management_encrypt.Bcrypt,
+	jwt user_management_encrypt.JWT,
+) *UserSrv {
 	return &UserSrv{
 		userRepo:      userRepo,
 		clock:         clock,
 		uuidGenerator: uuidGenerator,
+		bcrypt:        bcrypt,
+		jwt:           jwt,
 	}
 }
 
@@ -51,7 +59,7 @@ func (userSrv *UserSrv) CreateUserSrv(ctx context.Context, user requests.SignupR
 		return CreateUserResponse{}, errors.New("email already used")
 	}
 
-	b, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	b, err := userSrv.bcrypt.HashAndSalt(user.Password)
 	if err != nil {
 		return CreateUserResponse{}, errors.New("error trying to encrypt the password")
 	}
@@ -81,12 +89,12 @@ func (userSrv *UserSrv) LogUserSrv(ctx context.Context, user requests.LoginReque
 		return LogResponse{}, errors.New("user not found")
 	}
 
-	err = foundUser.IsAuthenticated(bcrypt.CompareHashAndPassword, user.Password)
+	err = foundUser.IsAuthenticated(userSrv.bcrypt.ComparePasswords, user.Password)
 	if err != nil {
 		return LogResponse{}, errors.New("wrong password")
 	}
 
-	token, err := foundUser.GetToken(encrypt.Generate)
+	token, err := foundUser.GetToken(userSrv.jwt.Generate)
 	if err != nil {
 		return LogResponse{}, err
 	}
