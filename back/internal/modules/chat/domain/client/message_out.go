@@ -1,4 +1,4 @@
-package messages
+package client
 
 import (
 	socket_shared "chat/internal/modules/chat/domain/shared"
@@ -6,6 +6,28 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+)
+
+// OUT
+type MessageOut struct {
+	Type    MessageOutType    `json:"type"`
+	Content map[string]string `json:"content"`
+}
+
+type MessageOutType string
+
+const (
+	HELLO                      MessageOutType = "HELLO"
+	NEW_ROOM_MESSAGE           MessageOutType = "NEW_ROOM_MESSAGE"
+	NEW_BROADCAST_MESSAGE      MessageOutType = "NEW_BROADCAST_MESSAGE"
+	MEMBER_JOINED              MessageOutType = "MEMBER_JOINED"
+	MEMBER_LEAVED              MessageOutType = "MEMBER_LEAVED"
+	NEW_MEMBER_CONNECTED       MessageOutType = "NEW_MEMBER_CONNECTED"
+	ROOM_CREATED               MessageOutType = "ROOM_CREATED"
+	CONNECTED_TO_ROOM          MessageOutType = "CONNECTED_TO_ROOM"
+	NEW_USER_CONNECTED_TO_ROOM MessageOutType = "NEW_USER_CONNECTED_TO_ROOM"
+	DISCONNECTED_FROM_ROOM     MessageOutType = "DISCONNECTED_FROM_ROOM"
+	ERROR                      MessageOutType = "ERROR"
 )
 
 func BuildMessageOut(mType MessageOutType, content map[string]string) MessageOut {

@@ -1,8 +1,14 @@
-package messages
+package chat_infra
 
 import (
 	"github.com/google/uuid"
 )
+
+type RawMessageIn struct {
+	MessageType int
+	P           []byte
+	Err         error
+}
 
 func BuildMessageIn(mType MessageInType, content map[string]string) MessageIn {
 	mi := MessageIn{

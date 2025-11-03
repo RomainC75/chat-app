@@ -1,4 +1,4 @@
-package socket_shared
+package client
 
 type UserData struct {
 	Id    int32

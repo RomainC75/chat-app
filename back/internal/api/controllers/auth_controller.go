@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"chat/internal/api/dto/requests"
-	repositories "chat/internal/api/repos"
+	repo_db "chat/internal/api/repos/db"
 	validatorHandler "chat/internal/api/validator"
 	user_management_app "chat/internal/modules/user-management/application"
 	user_management_infra "chat/internal/modules/user-management/infra"
@@ -27,7 +27,7 @@ type AuthCtrl struct {
 func NewAuthCtrl() *AuthCtrl {
 	return &AuthCtrl{
 		userSrv: user_management_app.NewUserSrv(
-			repositories.NewUserRepo(),
+			repo_db.NewUserRepo(),
 			user_management_infra.NewInMemoryUUIDGenerator(),
 			user_management_infra.NewInMemoryClock(),
 			user_management_infra.NewInMemoryBcrypt(),
