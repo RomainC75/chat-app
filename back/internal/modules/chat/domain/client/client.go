@@ -1,16 +1,31 @@
 package client
 
 import (
-	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
-	"log/slog"
 
 	"github.com/google/uuid"
 )
+
+// ===
+
+type IWebSocket interface {
+	WriteMessage(messageType int, message WebSocketMessageOut) error
+	GetChan() chan (CommandMessageIn)
+}
+
+type WebSocketMessageOut struct {
+	Message string `json:"message"`
+}
+
+type WebSocketMessage struct {
+	Type    string            `json:"type"`
+	Content map[string]string `json:"content"`
+}
+
+// ======================
 
 type IManager interface {
 	RemoveClient(*Client)
@@ -22,20 +37,20 @@ type IManager interface {
 
 type IRoom interface {
 	GetId() uuid.UUID
-	GetClients() []socket_shared.UserData
+	GetClients() []UserData
 }
 
 type Client struct {
 	manager  IManager
 	room     IRoom
-	conn     socket_shared.IWebSocket
-	user     socket_shared.UserData
+	conn     IWebSocket
+	user     UserData
 	egress   chan ([]byte)
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }
 
-func NewClient(manager IManager, conn socket_shared.IWebSocket, userData socket_shared.UserData) *Client {
+func NewClient(manager IManager, conn IWebSocket, userData UserData) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Client{
 		manager:  manager,
@@ -51,7 +66,7 @@ func (c *Client) PrepareToBeDeleted() {
 	c.cancelFn()
 }
 
-func (c *Client) SendToClient(msg messages.MessageOut) {
+func (c *Client) SendToClient(msg MessageOut) {
 	m, _ := json.Marshal(msg)
 	c.egress <- m
 }
@@ -62,19 +77,20 @@ func (c *Client) GoListen() {
 			select {
 			case <-c.ctx.Done():
 				return
-			case rawMessageIn := <-c.conn.GetChan():
-				err := rawMessageIn.Err
-				payload := rawMessageIn.P
-				if err != nil {
-					slog.Error("client disconnected", "err", err)
-					c.manager.RemoveClient(c)
-				}
-				fmt.Println("----------> Message ", string(payload))
-				message, err := messages.UnMarshallMessageIn(payload)
-				if err != nil {
-					slog.Error("-> client : error unMarshalling the payload")
-				}
-				c.HandleMessageIn(message)
+			case messageCommandIn := <-c.conn.GetChan():
+				// err := rawMessageIn.Err
+				// payload := rawMessageIn.P
+				// if err != nil {
+				// 	slog.Error("client disconnected", "err", err)
+				// 	c.manager.RemoveClient(c)
+				// }
+				// fmt.Println("----------> Message ", string(payload))
+				// message, err := messages.UnMarshallMessageIn(payload)
+				// if err != nil {
+				// 	slog.Error("-> client : error unMarshalling the payload")
+				// }
+				// c.HandleMessageIn(message)
+				messageCommandIn.Execute(c)
 			}
 		}
 	}()
@@ -112,23 +128,23 @@ func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
 }
 
-func (c *Client) HandleMessageIn(msg messages.MessageIn) {
-	switch msg.Type {
-	case messages.BROADCAST_MESSAGE:
-		c.manager.SendBroadcastMessage(c.user, msg)
-	case messages.ROOM_MESSAGE:
-		c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
-	case messages.CREATE_ROOM:
-		c.manager.CreateRoom(c, msg.Content["name"])
-	case messages.CONNECT_TO_ROOM:
-		roomIdStr := msg.Content["room_id"]
-		roomId, _ := uuid.Parse(roomIdStr)
-		_ = c.manager.ConnectUserAndRoom(c, roomId)
-	default:
-		c.writeErrorMessage()
-		return
-	}
-}
+// func (c *Client) HandleMessageIn(msg messages.MessageIn) {
+// 	switch msg.Type {
+// 	case messages.BROADCAST_MESSAGE:
+// 		c.manager.SendBroadcastMessage(c.user, msg)
+// 	case messages.ROOM_MESSAGE:
+// 		c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
+// 	case messages.CREATE_ROOM:
+// 		c.manager.CreateRoom(c, msg.Content["name"])
+// 	case messages.CONNECT_TO_ROOM:
+// 		roomIdStr := msg.Content["room_id"]
+// 		roomId, _ := uuid.Parse(roomIdStr)
+// 		_ = c.manager.ConnectUserAndRoom(c, roomId)
+// 	default:
+// 		c.writeErrorMessage()
+// 		return
+// 	}
+// }
 
 func (c *Client) writeHelloMessage() {
 	helloMessage := messages.BuildMessageOut(messages.HELLO, map[string]string{
@@ -152,4 +168,21 @@ func (c *Client) ConnectToRoom(room IRoom) {
 	message := messages.BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
 	bMessageOut, _ := json.Marshal(message)
 	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+}
+
+func (c *Client) BroadcastMessage(message string) {
+	bMessage := messages.BuildBroadcastMessageOut(c.user, message)
+	c.manager.SendBroadcastMessage(bMessage)
+}
+
+func (c *Client) SendRoomMessage(roomId uuid.UUID, message string) {
+	c.manager.SendRoomMessage(c, roomId.String(), message)
+}
+
+func (c *Client) CreateRoom(roomName string) {
+	c.manager.CreateRoom(c, roomName)
+}
+
+func (c *Client) ConnectUserToRoom(roomId uuid.UUID) {
+	_ = c.manager.ConnectUserAndRoom(c, roomId)
 }
