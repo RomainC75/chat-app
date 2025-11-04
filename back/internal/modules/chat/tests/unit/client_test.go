@@ -5,7 +5,7 @@ import (
 	"chat/internal/modules/chat/domain/messages"
 	"chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
-	"chat/internal/modules/chat/domain/websocket"
+	chat_app_infra "chat/internal/modules/chat/infra"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -20,7 +20,7 @@ type TestDriver struct {
 	sockets []socket_shared.IWebSocket
 }
 
-func NewTestDriverAndConnectUser1() (*TestDriver, *websocket.FakeWebSocket) {
+func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket) {
 	manager := manager.NewManager()
 	td := &TestDriver{
 		manager: manager,
@@ -32,8 +32,8 @@ func NewTestDriverAndConnectUser1() (*TestDriver, *websocket.FakeWebSocket) {
 	return td, user1socket
 }
 
-func (td *TestDriver) CreateNewClient(id int32, email string) *websocket.FakeWebSocket {
-	newUserSocket := websocket.NewFakeWebSocket()
+func (td *TestDriver) CreateNewClient(id int32, email string) *chat_app_infra.FakeWebSocket {
+	newUserSocket := chat_app_infra.NewFakeWebSocket()
 	newUserData := socket_shared.UserData{
 		Id:    id,
 		Email: email,
@@ -44,7 +44,7 @@ func (td *TestDriver) CreateNewClient(id int32, email string) *websocket.FakeWeb
 	return newUserSocket
 }
 
-func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *websocket.FakeWebSocket) messages.MessageOut {
+func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *chat_app_infra.FakeWebSocket) messages.MessageOut {
 	_, p, _ := socket.GetNextMessageToWrite()
 
 	messageOut := messages.MessageOut{}
@@ -53,14 +53,14 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *websocket.FakeWe
 	return messageOut
 }
 
-func (td *TestDriver) TriggerMessageIn(socket *websocket.FakeWebSocket, messageIn messages.MessageIn) {
+func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, messageIn messages.MessageIn) {
 	jsonMessage, _ := json.Marshal(messageIn)
 	socket.TriggerMessageIn(socket_shared.TextMessage, []byte(jsonMessage), nil)
 	// socket.ReadMessage()
 
 }
 
-func (td *TestDriver) WaitForNextMessageOut(socket *websocket.FakeWebSocket) (int, messages.MessageOut, error) {
+func (td *TestDriver) WaitForNextMessageOut(socket *chat_app_infra.FakeWebSocket) (int, messages.MessageOut, error) {
 	socket.GetWG().Wait()
 	messageType, p, err := socket.GetNextMessageToWrite()
 	if err != nil {
@@ -76,7 +76,7 @@ func (td *TestDriver) Close() {
 	td.manager.CloseEveryClientConnections()
 }
 
-func (td *TestDriver) AddWaitToSelectedSockets(sockets ...*websocket.FakeWebSocket) {
+func (td *TestDriver) AddWaitToSelectedSockets(sockets ...*chat_app_infra.FakeWebSocket) {
 	for i := 0; i < len(sockets); i++ {
 		sockets[i].WaitAdd()
 	}
