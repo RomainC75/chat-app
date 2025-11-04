@@ -46,7 +46,7 @@ type CreateRoomIn struct {
 	description string
 }
 
-func NewCreateRoomCommandMessageIn(roomName string, description string) *CreateRoomIn {
+func NewCreateRoomICommandMessageIn(roomName string, description string) *CreateRoomIn {
 	return &CreateRoomIn{
 		roomName:    roomName,
 		description: description,

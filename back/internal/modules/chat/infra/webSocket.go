@@ -29,7 +29,7 @@ var (
 
 type WebSocket struct {
 	conn     *websocket.Conn
-	readChan chan (chat_socket.CommandMessageIn)
+	readChan chan (chat_socket.ICommandMessageIn)
 	ctx      context.Context
 	cancel   context.CancelFunc
 }
@@ -44,7 +44,7 @@ func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
 
 	fws := &WebSocket{
 		conn:     conn,
-		readChan: make(chan (chat_socket.CommandMessageIn)),
+		readChan: make(chan (chat_socket.ICommandMessageIn)),
 		ctx:      ctx,
 		cancel:   cancel,
 	}
@@ -78,7 +78,7 @@ func (fws *WebSocket) listenToNewMessages() {
 	}()
 }
 
-func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.CommandMessageIn, error) {
+func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.ICommandMessageIn, error) {
 	msg, err := messages.UnMarshallMessageIn(payload)
 	if err != nil {
 		slog.Error("-> client : error unMarshalling the payload")
@@ -93,7 +93,7 @@ func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.CommandMessag
 		}
 		return chat_socket.NewSendRoomMessageIn(roomId, msg.Content["message"]), nil
 	case messages.CREATE_ROOM:
-		return chat_socket.NewCreateRoomCommandMessageIn(msg.Content["name"], msg.Content["description"]), nil
+		return chat_socket.NewCreateRoomICommandMessageIn(msg.Content["name"], msg.Content["description"]), nil
 	case messages.CONNECT_TO_ROOM:
 		return chat_socket.NewConnectToRoomIn(msg.Content["room_id"]), nil
 	}
@@ -101,7 +101,7 @@ func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.CommandMessag
 
 }
 
-func (fws *WebSocket) GetChan() chan (chat_socket.CommandMessageIn) {
+func (fws *WebSocket) GetChan() chan (chat_socket.ICommandMessageIn) {
 	return fws.readChan
 }
 

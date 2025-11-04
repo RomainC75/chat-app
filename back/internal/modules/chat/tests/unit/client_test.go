@@ -54,8 +54,8 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *chat_app_infra.F
 	return messageOut
 }
 
-func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, commandMessageIn chat_socket.CommandMessageIn) {
-	socket.TriggerMessageIn(commandMessageIn)
+func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, ICommandMessageIn chat_socket.ICommandMessageIn) {
+	socket.TriggerMessageIn(ICommandMessageIn)
 	// socket.ReadMessage()
 }
 
@@ -122,7 +122,7 @@ func TestClient(t *testing.T) {
 
 		roomName := "newRoom"
 		// message := messages.BuildACreateRoomMessageIn(roomName, "room descritpion")
-		message := chat_socket.NewCreateRoomCommandMessageIn(roomName, "room descritpion")
+		message := chat_socket.NewCreateRoomICommandMessageIn(roomName, "room descritpion")
 
 		td.AddWaitToSelectedSockets(user1ws)
 		td.TriggerMessageIn(user1ws, message)
@@ -176,7 +176,7 @@ func TestClient(t *testing.T) {
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		roomName := "newRoom"
 		// createRoomMessage := messages.BuildACreateRoomMessageIn(roomName, "room description")
-		createRoomMessage := chat_socket.NewCreateRoomCommandMessageIn(roomName, "room description")
+		createRoomMessage := chat_socket.NewCreateRoomICommandMessageIn(roomName, "room description")
 
 		td.TriggerMessageIn(user1ws, createRoomMessage)
 		_, messageOutToUser1, _ := td.WaitForNextMessageOut(user1ws)

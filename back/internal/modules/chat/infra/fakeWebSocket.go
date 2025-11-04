@@ -10,7 +10,7 @@ type FakeWebSocket struct {
 	nextMessageTypeToWrite int
 	nextMessageToWrite     []byte
 
-	readChan chan (chat_socket.CommandMessageIn)
+	readChan chan (chat_socket.ICommandMessageIn)
 	wg       *sync.WaitGroup
 }
 
@@ -19,7 +19,7 @@ func NewFakeWebSocket() *FakeWebSocket {
 	// hello message
 	wg.Add(1)
 	return &FakeWebSocket{
-		readChan: make(chan (chat_socket.CommandMessageIn)),
+		readChan: make(chan (chat_socket.ICommandMessageIn)),
 		wg:       wg,
 	}
 }
@@ -31,8 +31,8 @@ func (fws *FakeWebSocket) WaitAdd() {
 }
 
 // ? 3 write message in the selected socket
-func (fws *FakeWebSocket) TriggerMessageIn(commandMessageIn chat_socket.CommandMessageIn) {
-	fws.readChan <- commandMessageIn
+func (fws *FakeWebSocket) TriggerMessageIn(ICommandMessageIn chat_socket.ICommandMessageIn) {
+	fws.readChan <- ICommandMessageIn
 }
 func (fws *FakeWebSocket) WriteMessage(messageType int, data []byte) error {
 	fws.nextMessageTypeToWrite = messageType
@@ -46,7 +46,7 @@ func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, er
 	return fws.nextMessageType, fws.nextMessageToWrite, nil
 }
 
-func (fws *FakeWebSocket) GetChan() chan (chat_socket.CommandMessageIn) {
+func (fws *FakeWebSocket) GetChan() chan (chat_socket.ICommandMessageIn) {
 	return fws.readChan
 }
 

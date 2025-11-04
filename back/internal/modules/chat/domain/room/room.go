@@ -10,11 +10,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type RoomBasicData struct {
-	Uuid      uuid.UUID
-	Name      string
-	CreatedAt time.Time
-}
 type Room struct {
 	basicData RoomBasicData
 	clients   typedsyncmap.TSyncMap[*chat_socket.Client, bool]

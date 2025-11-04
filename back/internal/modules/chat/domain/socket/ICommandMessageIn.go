@@ -1,5 +1,5 @@
 package chat_socket
 
-type CommandMessageIn interface {
+type ICommandMessageIn interface {
 	Execute(client *Client)
 }

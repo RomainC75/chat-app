@@ -60,8 +60,8 @@ func (c *Client) GoListen() {
 			select {
 			case <-c.ctx.Done():
 				return
-			case commandMessageIn := <-c.conn.GetChan():
-				commandMessageIn.Execute(c)
+			case ICommandMessageIn := <-c.conn.GetChan():
+				ICommandMessageIn.Execute(c)
 			}
 		}
 	}()
