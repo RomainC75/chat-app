@@ -10,3 +10,16 @@ docker compose up
 ```
 
 go to http://localhost:5173
+
+Todo : 
+
+- temp adapters for persistence,
+- error handlers,
+- test-containers for repo,
+- hexagonal architecture,
+- DDD 
+- CQRS
+- Context timeout for requests
+  
+
+- save each message in db
