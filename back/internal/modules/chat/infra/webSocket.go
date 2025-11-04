@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -59,16 +60,17 @@ func (fws *WebSocket) listenToNewMessages() {
 				return
 			default:
 				_, payload, err := fws.conn.ReadMessage()
-				// messageIn := socket_shared.RawMessageIn{
-				// 	MessageType: mType,
-				// 	P:           payload,
-				// 	Err:         err,
-				// }
+				if err != nil {
+					slog.Error("-> client : error reading message from websocket", slog.String("error", err.Error()))
+					fws.sendErrorMessage()
+					continue
+				}
 
 				msg, err := fws.HandleMessageIn(payload)
 				if err != nil {
 					slog.Error("-> client : error handling the message in")
 					fws.sendErrorMessage()
+					continue
 				}
 				fws.readChan <- msg
 			}
@@ -83,18 +85,17 @@ func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.CommandMessag
 	}
 	switch msg.Type {
 	case messages.BROADCAST_MESSAGE:
-
-		// c.manager.SendBroadcastMessage(c.user, msg)
+		return chat_socket.NewBroadcastMessageIn(msg.Content["message"]), nil
 	case messages.ROOM_MESSAGE:
-		// c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
+		roomId, err := uuid.Parse(msg.Content["room_id"])
+		if err != nil {
+			return nil, fmt.Errorf("unparsable room id")
+		}
+		return chat_socket.NewSendRoomMessageIn(roomId, msg.Content["message"]), nil
 	case messages.CREATE_ROOM:
-		// c.manager.CreateRoom(c, msg.Content["name"])
+		return chat_socket.NewCreateRoomCommandMessageIn(msg.Content["name"], msg.Content["description"]), nil
 	case messages.CONNECT_TO_ROOM:
-		// roomIdStr := msg.Content["room_id"]
-		// roomId, _ := uuid.Parse(roomIdStr)
-		// _ = c.manager.ConnectUserAndRoom(c, roomId)
-		// default:
-		// c.writeErrorMessage()
+		return chat_socket.NewConnectToRoomIn(msg.Content["room_id"]), nil
 	}
 	return nil, fmt.Errorf("unknown message type")
 
