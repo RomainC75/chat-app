@@ -1,4 +1,4 @@
-package chat_socket
+package chat_client
 
 import (
 	"chat/internal/modules/chat/domain/messages"

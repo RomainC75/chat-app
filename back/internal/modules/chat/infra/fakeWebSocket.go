@@ -1,7 +1,7 @@
 package chat_app_infra
 
 import (
-	chat_socket "chat/internal/modules/chat/domain/socket"
+	chat_client "chat/internal/modules/chat/domain/client"
 	"sync"
 )
 
@@ -10,7 +10,7 @@ type FakeWebSocket struct {
 	nextMessageTypeToWrite int
 	nextMessageToWrite     []byte
 
-	readChan chan (chat_socket.ICommandMessageIn)
+	readChan chan (chat_client.ICommandMessageIn)
 	wg       *sync.WaitGroup
 }
 
@@ -19,7 +19,7 @@ func NewFakeWebSocket() *FakeWebSocket {
 	// hello message
 	wg.Add(1)
 	return &FakeWebSocket{
-		readChan: make(chan (chat_socket.ICommandMessageIn)),
+		readChan: make(chan (chat_client.ICommandMessageIn)),
 		wg:       wg,
 	}
 }
@@ -31,11 +31,11 @@ func (fws *FakeWebSocket) WaitAdd() {
 }
 
 // ? 3 write message in the selected socket
-func (fws *FakeWebSocket) TriggerMessageIn(ICommandMessageIn chat_socket.ICommandMessageIn) {
+func (fws *FakeWebSocket) TriggerMessageIn(ICommandMessageIn chat_client.ICommandMessageIn) {
 	fws.readChan <- ICommandMessageIn
 }
-func (fws *FakeWebSocket) WriteMessage(messageType int, data []byte) error {
-	fws.nextMessageTypeToWrite = messageType
+func (fws *FakeWebSocket) WriteTextMessage(data []byte) error {
+	fws.nextMessageTypeToWrite = TextMessage
 	fws.nextMessageToWrite = data
 	fws.wg.Done()
 	return nil
@@ -46,10 +46,14 @@ func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, er
 	return fws.nextMessageType, fws.nextMessageToWrite, nil
 }
 
-func (fws *FakeWebSocket) GetChan() chan (chat_socket.ICommandMessageIn) {
+func (fws *FakeWebSocket) GetChan() chan (chat_client.ICommandMessageIn) {
 	return fws.readChan
 }
 
 func (fws *FakeWebSocket) GetWG() *sync.WaitGroup {
 	return fws.wg
+}
+
+func (fws *FakeWebSocket) WriteCloseMessage() error {
+	return nil
 }

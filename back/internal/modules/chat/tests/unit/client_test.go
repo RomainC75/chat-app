@@ -1,6 +1,7 @@
 package unit
 
 import (
+	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/manager"
 	"chat/internal/modules/chat/domain/messages"
 	chat_room "chat/internal/modules/chat/domain/room"
@@ -18,7 +19,7 @@ import (
 
 type TestDriver struct {
 	manager *manager.Manager
-	sockets []chat_socket.IWebSocket
+	sockets []chat_client.IWebSocket
 }
 
 func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket) {
@@ -54,9 +55,8 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *chat_app_infra.F
 	return messageOut
 }
 
-func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, ICommandMessageIn chat_socket.ICommandMessageIn) {
+func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, ICommandMessageIn chat_client.ICommandMessageIn) {
 	socket.TriggerMessageIn(ICommandMessageIn)
-	// socket.ReadMessage()
 }
 
 func (td *TestDriver) WaitForNextMessageOut(socket *chat_app_infra.FakeWebSocket) (int, messages.MessageOut, error) {

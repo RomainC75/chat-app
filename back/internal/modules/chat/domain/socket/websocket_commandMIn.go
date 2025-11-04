@@ -1,6 +1,8 @@
 package chat_socket
 
 import (
+	chat_client "chat/internal/modules/chat/domain/client"
+
 	"github.com/google/uuid"
 )
 
@@ -16,8 +18,8 @@ func NewBroadcastMessageIn(content string) *BroadcastMessageIn {
 	}
 }
 
-func (bm *BroadcastMessageIn) Execute(client *Client) {
-	client.BroadcastMessage(bm.content)
+func (bm *BroadcastMessageIn) Execute(c *chat_client.Client) {
+	c.BroadcastMessage(bm.content)
 }
 
 // -- Room Message Command
@@ -34,7 +36,7 @@ func NewRoomMessageIn(roomId string, message string) *RoomMessageIn {
 	}
 }
 
-func (rm *RoomMessageIn) Execute(client *Client) {
+func (rm *RoomMessageIn) Execute(client *chat_client.Client) {
 	roomUuid, _ := uuid.Parse(rm.roomId)
 	client.SendRoomMessage(roomUuid, rm.message)
 }
@@ -53,7 +55,7 @@ func NewCreateRoomICommandMessageIn(roomName string, description string) *Create
 	}
 }
 
-func (cr *CreateRoomIn) Execute(client *Client) {
+func (cr *CreateRoomIn) Execute(client *chat_client.Client) {
 	client.CreateRoom(cr.roomName)
 }
 
@@ -69,7 +71,7 @@ func NewConnectToRoomIn(roomId string) *ConnectToRoomIn {
 	}
 }
 
-func (ctr *ConnectToRoomIn) Execute(client *Client) {
+func (ctr *ConnectToRoomIn) Execute(client *chat_client.Client) {
 	roomUuid, _ := uuid.Parse(ctr.roomId)
 	client.ConnectUserToRoom(roomUuid)
 }
@@ -87,6 +89,6 @@ func NewSendRoomMessageIn(roomId uuid.UUID, message string) *SendRoomMessageIn {
 	}
 }
 
-func (srm *SendRoomMessageIn) Execute(client *Client) {
+func (srm *SendRoomMessageIn) Execute(client *chat_client.Client) {
 	client.SendRoomMessage(srm.roomId, srm.message)
 }

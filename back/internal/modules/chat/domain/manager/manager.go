@@ -1,10 +1,10 @@
 package manager
 
 import (
+	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
 	chat_room "chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
-	chat_socket "chat/internal/modules/chat/domain/socket"
 
 	typedsyncmap "chat/utils/typedSyncMap"
 	"errors"
@@ -15,53 +15,53 @@ import (
 
 type Manager struct {
 	rooms   *typedsyncmap.TSyncMap[uuid.UUID, *chat_room.Room]
-	clients *typedsyncmap.TSyncMap[*chat_socket.Client, bool]
+	clients *typedsyncmap.TSyncMap[*chat_client.Client, bool]
 	m       *sync.RWMutex
 }
 
 func NewManager() *Manager {
 	manager := Manager{
 		rooms:   typedsyncmap.NewSyncMap[uuid.UUID, *chat_room.Room](),
-		clients: typedsyncmap.NewSyncMap[*chat_socket.Client, bool](),
+		clients: typedsyncmap.NewSyncMap[*chat_client.Client, bool](),
 		m:       &sync.RWMutex{},
 	}
 	return &manager
 }
 
-func (m *Manager) ServeWS(conn chat_socket.IWebSocket, userData socket_shared.UserData) {
-	client := chat_socket.NewClient(m, conn, userData)
+func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.UserData) {
+	client := chat_client.NewClient(m, conn, userData)
 	m.AddClient(client)
 	// m.NotifyClientStateOfRoomsAndGames(client)
 }
 
-func (m *Manager) AddClient(c *chat_socket.Client) {
+func (m *Manager) AddClient(c *chat_client.Client) {
 	c.GoListen()
 	c.GoWrite()
-	m.Broadcast(chat_socket.BuildNewMemberConnectedMessageOut(c.GetUserData()))
+	m.Broadcast(chat_client.BuildNewMemberConnectedMessageOut(c.GetUserData()))
 	m.clients.Store(c, true)
 }
 
-func (m *Manager) RemoveClient(client *chat_socket.Client) {
+func (m *Manager) RemoveClient(client *chat_client.Client) {
 	client.PrepareToBeDeleted()
 	m.clients.Delete(client)
 }
 
 func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn messages.MessageIn) {
-	bMessage := chat_socket.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
-	m.clients.Range(func(client *chat_socket.Client, value bool) bool {
+	bMessage := chat_client.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
+	m.clients.Range(func(client *chat_client.Client, value bool) bool {
 		client.SendToClient(bMessage)
 		return true
 	})
 }
 
 func (m *Manager) Broadcast(msgOut messages.MessageOut) {
-	m.clients.Range(func(client *chat_socket.Client, value bool) bool {
+	m.clients.Range(func(client *chat_client.Client, value bool) bool {
 		client.SendToClient(msgOut)
 		return true
 	})
 }
 
-func (m *Manager) SendRoomMessage(c *chat_socket.Client, roomIdStr string, message string) {
+func (m *Manager) SendRoomMessage(c *chat_client.Client, roomIdStr string, message string) {
 	roomUuid, err := uuid.Parse(roomIdStr)
 	if err != nil {
 		return
@@ -70,22 +70,22 @@ func (m *Manager) SendRoomMessage(c *chat_socket.Client, roomIdStr string, messa
 	if err != nil {
 		return
 	}
-	roomMessage := chat_socket.BuildRoomMessageOut(roomUuid, c.GetUserData(), message)
+	roomMessage := chat_client.BuildRoomMessageOut(roomUuid, c.GetUserData(), message)
 	foundRoom.Broadcast(roomMessage)
 
 }
 
-func (m *Manager) CreateRoom(c *chat_socket.Client, roomName string) {
+func (m *Manager) CreateRoom(c *chat_client.Client, roomName string) {
 	uuid, room := chat_room.NewRoom(roomName, c)
 	m.rooms.Store(uuid, room)
 	clients := room.GetClients()
-	msg := chat_socket.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
+	msg := chat_client.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
 	// ! connectUserAndRoom()
 	m.Broadcast(msg)
 }
 
 func (m *Manager) CloseEveryClientConnections() {
-	m.clients.Range(func(client *chat_socket.Client, value bool) bool {
+	m.clients.Range(func(client *chat_client.Client, value bool) bool {
 		client.PrepareToBeDeleted()
 		return true
 	})
@@ -117,7 +117,7 @@ func (m *Manager) GetRoomBasicData(id uuid.UUID) (chat_room.RoomBasicData, error
 	return res, err
 }
 
-func (m *Manager) ConnectUserAndRoom(c *chat_socket.Client, roomId uuid.UUID) error {
+func (m *Manager) ConnectUserAndRoom(c *chat_client.Client, roomId uuid.UUID) error {
 	foundRoom, ok := m.rooms.Load(roomId)
 	if !ok {
 		return errors.New("room Id not found")

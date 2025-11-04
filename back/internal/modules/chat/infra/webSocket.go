@@ -1,6 +1,7 @@
 package chat_app_infra
 
 import (
+	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
 	chat_socket "chat/internal/modules/chat/domain/socket"
 	"context"
@@ -11,6 +12,21 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+)
+
+type RawMessageIn struct {
+	MessageType int
+	P           []byte
+	Err         error
+}
+
+// copied from gorilla/websocket to purify the socket domain
+const (
+	TextMessage   = 1
+	BinaryMessage = 2
+	CloseMessage  = 8
+	PingMessage   = 9
+	PongMessage   = 10
 )
 
 var (
@@ -29,7 +45,7 @@ var (
 
 type WebSocket struct {
 	conn     *websocket.Conn
-	readChan chan (chat_socket.ICommandMessageIn)
+	readChan chan (chat_client.ICommandMessageIn)
 	ctx      context.Context
 	cancel   context.CancelFunc
 }
@@ -44,7 +60,7 @@ func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
 
 	fws := &WebSocket{
 		conn:     conn,
-		readChan: make(chan (chat_socket.ICommandMessageIn)),
+		readChan: make(chan (chat_client.ICommandMessageIn)),
 		ctx:      ctx,
 		cancel:   cancel,
 	}
@@ -78,7 +94,7 @@ func (fws *WebSocket) listenToNewMessages() {
 	}()
 }
 
-func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.ICommandMessageIn, error) {
+func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_client.ICommandMessageIn, error) {
 	msg, err := messages.UnMarshallMessageIn(payload)
 	if err != nil {
 		slog.Error("-> client : error unMarshalling the payload")
@@ -101,13 +117,17 @@ func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.ICommandMessa
 
 }
 
-func (fws *WebSocket) GetChan() chan (chat_socket.ICommandMessageIn) {
+func (fws *WebSocket) GetChan() chan (chat_client.ICommandMessageIn) {
 	return fws.readChan
 }
 
-func (fws *WebSocket) WriteMessage(messageType int, data []byte) error {
+func (fws *WebSocket) WriteTextMessage(data []byte) error {
 	fmt.Println("-------> message to SEND BACK: ", string(data))
-	return fws.conn.WriteMessage(chat_socket.TextMessage, data)
+	return fws.conn.WriteMessage(TextMessage, data)
+}
+
+func (fws *WebSocket) WriteCloseMessage() error {
+	return fws.conn.WriteMessage(CloseMessage, nil)
 }
 
 func (fws *WebSocket) Cancel() {
@@ -115,9 +135,9 @@ func (fws *WebSocket) Cancel() {
 }
 
 func (fws *WebSocket) sendErrorMessage() {
-	badRequestMessage := chat_socket.BuildMessageOut(messages.ERROR, map[string]string{
+	badRequestMessage := chat_client.BuildMessageOut(messages.ERROR, map[string]string{
 		"message": "bad request",
 	})
 	bMessageOut, _ := json.Marshal(badRequestMessage)
-	fws.conn.WriteMessage(chat_socket.TextMessage, bMessageOut)
+	fws.conn.WriteMessage(TextMessage, bMessageOut)
 }

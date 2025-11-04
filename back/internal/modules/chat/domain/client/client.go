@@ -1,4 +1,4 @@
-package chat_socket
+package chat_client
 
 import (
 	"chat/internal/modules/chat/domain/messages"
@@ -80,13 +80,13 @@ func (c *Client) GoWrite() {
 				return
 			case message, ok := <-c.egress:
 				if !ok {
-					if err := c.conn.WriteMessage(CloseMessage, nil); err != nil {
+					if err := c.conn.WriteCloseMessage(); err != nil {
 						log.Println("connection closed:", err)
 					}
 					continue
 				}
 
-				if err := c.conn.WriteMessage(TextMessage, message); err != nil {
+				if err := c.conn.WriteTextMessage(message); err != nil {
 					log.Printf("failed to send message: %v\n", err)
 				}
 				log.Println("message sent")
@@ -104,7 +104,7 @@ func (c *Client) writeHelloMessage() {
 		"message": "readyToCommunicate :-)",
 	})
 	bMessageOut, _ := json.Marshal(helloMessage)
-	c.conn.WriteMessage(TextMessage, bMessageOut)
+	c.conn.WriteTextMessage(bMessageOut)
 }
 
 func (c *Client) ConnectToRoom(room IRoom) {
@@ -112,7 +112,7 @@ func (c *Client) ConnectToRoom(room IRoom) {
 	roomUsers := room.GetClients()
 	message := BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
 	bMessageOut, _ := json.Marshal(message)
-	c.conn.WriteMessage(TextMessage, bMessageOut)
+	c.conn.WriteTextMessage(bMessageOut)
 }
 
 func (c *Client) BroadcastMessage(message string) {

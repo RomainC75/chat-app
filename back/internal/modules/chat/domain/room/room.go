@@ -1,9 +1,9 @@
 package chat_room
 
 import (
+	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
-	chat_socket "chat/internal/modules/chat/domain/socket"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"time"
 
@@ -12,11 +12,11 @@ import (
 
 type Room struct {
 	basicData RoomBasicData
-	clients   typedsyncmap.TSyncMap[*chat_socket.Client, bool]
+	clients   typedsyncmap.TSyncMap[*chat_client.Client, bool]
 	// messages
 }
 
-func NewRoom(name string, c *chat_socket.Client) (uuid.UUID, *Room) {
+func NewRoom(name string, c *chat_client.Client) (uuid.UUID, *Room) {
 	uuid := uuid.New()
 	basicData := RoomBasicData{
 		Uuid:      uuid,
@@ -25,21 +25,21 @@ func NewRoom(name string, c *chat_socket.Client) (uuid.UUID, *Room) {
 	}
 	room := &Room{
 		basicData: basicData,
-		clients:   typedsyncmap.TSyncMap[*chat_socket.Client, bool]{},
+		clients:   typedsyncmap.TSyncMap[*chat_client.Client, bool]{},
 	}
 	room.AddClient(c)
 	return uuid, room
 }
 
-func (r *Room) AddClient(c *chat_socket.Client) {
-	notificationMessage := chat_socket.BuildNewUserConnectedToRoomMessageOut(c.GetUserData(), r.basicData.Uuid)
+func (r *Room) AddClient(c *chat_client.Client) {
+	notificationMessage := chat_client.BuildNewUserConnectedToRoomMessageOut(c.GetUserData(), r.basicData.Uuid)
 	r.Broadcast(notificationMessage)
 	r.clients.Store(c, true)
 }
 
 func (r *Room) GetClients() []socket_shared.UserData {
 	clients := []socket_shared.UserData{}
-	r.clients.Range(func(c *chat_socket.Client, value bool) bool {
+	r.clients.Range(func(c *chat_client.Client, value bool) bool {
 		userData := c.GetUserData()
 		clients = append(clients, userData)
 		return true
@@ -56,7 +56,7 @@ func (r *Room) GetId() uuid.UUID {
 }
 
 func (r *Room) Broadcast(message messages.MessageOut) {
-	r.clients.Range(func(c *chat_socket.Client, value bool) bool {
+	r.clients.Range(func(c *chat_client.Client, value bool) bool {
 		c.SendToClient(message)
 		return true
 	})
