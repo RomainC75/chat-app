@@ -1,9 +1,12 @@
 package chat_app_infra
 
 import (
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	"chat/internal/modules/chat/domain/messages"
+	chat_socket "chat/internal/modules/chat/domain/socket"
 	"context"
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -25,7 +28,7 @@ var (
 
 type WebSocket struct {
 	conn     *websocket.Conn
-	readChan chan (socket_shared.RawMessageIn)
+	readChan chan (chat_socket.CommandMessageIn)
 	ctx      context.Context
 	cancel   context.CancelFunc
 }
@@ -40,7 +43,7 @@ func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
 
 	fws := &WebSocket{
 		conn:     conn,
-		readChan: make(chan (socket_shared.RawMessageIn)),
+		readChan: make(chan (chat_socket.CommandMessageIn)),
 		ctx:      ctx,
 		cancel:   cancel,
 	}
@@ -55,27 +58,66 @@ func (fws *WebSocket) listenToNewMessages() {
 			case <-fws.ctx.Done():
 				return
 			default:
-				mType, payload, err := fws.conn.ReadMessage()
-				messageIn := socket_shared.RawMessageIn{
-					MessageType: mType,
-					P:           payload,
-					Err:         err,
+				_, payload, err := fws.conn.ReadMessage()
+				// messageIn := socket_shared.RawMessageIn{
+				// 	MessageType: mType,
+				// 	P:           payload,
+				// 	Err:         err,
+				// }
+
+				message, err := messages.UnMarshallMessageIn(payload)
+				if err != nil {
+					slog.Error("-> client : error unMarshalling the payload")
 				}
-				fws.readChan <- messageIn
+
+				msg, err := fws.HandleMessageIn(message)
+				if err != nil {
+					slog.Error("-> client : error handling the message in")
+					fws.sendErrorMessage()
+				}
+				fws.readChan <- msg
 			}
 		}
 	}()
 }
 
-func (fws *WebSocket) GetChan() chan (socket_shared.RawMessageIn) {
+func (fws *WebSocket) HandleMessageIn(msg messages.MessageIn) (chat_socket.CommandMessageIn, error) {
+	switch msg.Type {
+	case messages.BROADCAST_MESSAGE:
+
+		// c.manager.SendBroadcastMessage(c.user, msg)
+	case messages.ROOM_MESSAGE:
+		// c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
+	case messages.CREATE_ROOM:
+		// c.manager.CreateRoom(c, msg.Content["name"])
+	case messages.CONNECT_TO_ROOM:
+		// roomIdStr := msg.Content["room_id"]
+		// roomId, _ := uuid.Parse(roomIdStr)
+		// _ = c.manager.ConnectUserAndRoom(c, roomId)
+		// default:
+		// c.writeErrorMessage()
+	}
+	return nil, fmt.Errorf("unknown message type")
+
+}
+
+func (fws *WebSocket) GetChan() chan (chat_socket.CommandMessageIn) {
 	return fws.readChan
 }
 
 func (fws *WebSocket) WriteMessage(messageType int, data []byte) error {
 	fmt.Println("-------> message to SEND BACK: ", string(data))
-	return fws.conn.WriteMessage(socket_shared.TextMessage, data)
+	return fws.conn.WriteMessage(chat_socket.TextMessage, data)
 }
 
 func (fws *WebSocket) Cancel() {
 	fws.cancel()
+}
+
+func (fws *WebSocket) sendErrorMessage() {
+	badRequestMessage := chat_socket.BuildMessageOut(messages.ERROR, map[string]string{
+		"message": "bad request",
+	})
+	bMessageOut, _ := json.Marshal(badRequestMessage)
+	fws.conn.WriteMessage(chat_socket.TextMessage, bMessageOut)
 }

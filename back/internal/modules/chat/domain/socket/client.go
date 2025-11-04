@@ -1,4 +1,4 @@
-package client
+package chat_socket
 
 import (
 	"chat/internal/modules/chat/domain/messages"
@@ -28,14 +28,14 @@ type IRoom interface {
 type Client struct {
 	manager  IManager
 	room     IRoom
-	conn     socket_shared.IWebSocket
+	conn     IWebSocket
 	user     socket_shared.UserData
 	egress   chan ([]byte)
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }
 
-func NewClient(manager IManager, conn socket_shared.IWebSocket, userData socket_shared.UserData) *Client {
+func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Client{
 		manager:  manager,
@@ -131,25 +131,42 @@ func (c *Client) HandleMessageIn(msg messages.MessageIn) {
 }
 
 func (c *Client) writeHelloMessage() {
-	helloMessage := messages.BuildMessageOut(messages.HELLO, map[string]string{
+	helloMessage := BuildMessageOut(messages.HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
 	bMessageOut, _ := json.Marshal(helloMessage)
-	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+	c.conn.WriteMessage(TextMessage, bMessageOut)
 }
 
 func (c *Client) writeErrorMessage() {
-	badRequestMessage := messages.BuildMessageOut(messages.ERROR, map[string]string{
+	badRequestMessage := BuildMessageOut(messages.ERROR, map[string]string{
 		"message": "bad request",
 	})
 	bMessageOut, _ := json.Marshal(badRequestMessage)
-	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+	c.conn.WriteMessage(TextMessage, bMessageOut)
 }
 
 func (c *Client) ConnectToRoom(room IRoom) {
 	c.room = room
 	roomUsers := room.GetClients()
-	message := messages.BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
+	message := BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
 	bMessageOut, _ := json.Marshal(message)
-	c.conn.WriteMessage(socket_shared.TextMessage, bMessageOut)
+	c.conn.WriteMessage(TextMessage, bMessageOut)
+}
+
+func (c *Client) BroadcastMessage(message string) {
+	bMessage := messages.BuildBroadcastMessageIn(message)
+	c.manager.SendBroadcastMessage(c.user, bMessage)
+}
+
+func (c *Client) SendRoomMessage(roomId uuid.UUID, message string) {
+	c.manager.SendRoomMessage(c, roomId.String(), message)
+}
+
+func (c *Client) CreateRoom(roomName string) {
+	c.manager.CreateRoom(c, roomName)
+}
+
+func (c *Client) ConnectUserToRoom(roomId uuid.UUID) {
+	_ = c.manager.ConnectUserAndRoom(c, roomId)
 }

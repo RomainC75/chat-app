@@ -1,4 +1,4 @@
-package socket_shared
+package chat_socket
 
 type RawMessageIn struct {
 	MessageType int
@@ -8,7 +8,7 @@ type RawMessageIn struct {
 
 type IWebSocket interface {
 	WriteMessage(messageType int, data []byte) error
-	GetChan() chan (RawMessageIn)
+	GetChan() chan (CommandMessageIn)
 }
 
 // copied from gorilla/websocket to purify the socket domain

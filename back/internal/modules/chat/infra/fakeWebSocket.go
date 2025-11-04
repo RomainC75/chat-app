@@ -1,7 +1,7 @@
 package chat_app_infra
 
 import (
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_socket "chat/internal/modules/chat/domain/socket"
 	"sync"
 )
 
@@ -10,7 +10,7 @@ type FakeWebSocket struct {
 	nextMessageTypeToWrite int
 	nextMessageToWrite     []byte
 
-	readChan chan (socket_shared.RawMessageIn)
+	readChan chan (chat_socket.RawMessageIn)
 	wg       *sync.WaitGroup
 }
 
@@ -19,7 +19,7 @@ func NewFakeWebSocket() *FakeWebSocket {
 	// hello message
 	wg.Add(1)
 	return &FakeWebSocket{
-		readChan: make(chan (socket_shared.RawMessageIn)),
+		readChan: make(chan (chat_socket.RawMessageIn)),
 		wg:       wg,
 	}
 }
@@ -32,7 +32,7 @@ func (fws *FakeWebSocket) WaitAdd() {
 
 // ? 3 write message in the selected socket
 func (fws *FakeWebSocket) TriggerMessageIn(messageType int, p []byte, err error) {
-	rmi := socket_shared.RawMessageIn{
+	rmi := chat_socket.RawMessageIn{
 		MessageType: messageType,
 		P:           p,
 		Err:         err,
@@ -51,7 +51,7 @@ func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, er
 	return fws.nextMessageType, fws.nextMessageToWrite, nil
 }
 
-func (fws *FakeWebSocket) GetChan() chan (socket_shared.RawMessageIn) {
+func (fws *FakeWebSocket) GetChan() chan (chat_socket.RawMessageIn) {
 	return fws.readChan
 }
 

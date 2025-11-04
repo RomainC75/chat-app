@@ -51,3 +51,23 @@ const (
 	DISCONNECTED_FROM_ROOM     MessageOutType = "DISCONNECTED_FROM_ROOM"
 	ERROR                      MessageOutType = "ERROR"
 )
+
+type Message struct {
+	id        int32
+	roomID    string
+	userId    int32
+	content   string
+	createdAt string
+}
+
+func NewMessage(id int32, roomID string, userId int32, content string, createdAt string) *Message {
+	return &Message{
+		id:        id,
+		roomID:    roomID,
+		userId:    userId,
+		content:   content,
+		createdAt: createdAt,
+	}
+}
+
+/// ================

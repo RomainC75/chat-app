@@ -3,8 +3,8 @@ package unit
 import (
 	"chat/internal/modules/chat/domain/manager"
 	"chat/internal/modules/chat/domain/messages"
-	"chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_socket "chat/internal/modules/chat/domain/socket"
 	chat_app_infra "chat/internal/modules/chat/infra"
 	"encoding/json"
 	"fmt"
@@ -17,7 +17,7 @@ import (
 
 type TestDriver struct {
 	manager *manager.Manager
-	sockets []socket_shared.IWebSocket
+	sockets []chat_socket.IWebSocket
 }
 
 func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket) {
@@ -55,7 +55,7 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *chat_app_infra.F
 
 func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, messageIn messages.MessageIn) {
 	jsonMessage, _ := json.Marshal(messageIn)
-	socket.TriggerMessageIn(socket_shared.TextMessage, []byte(jsonMessage), nil)
+	socket.TriggerMessageIn(chat_socket.TextMessage, []byte(jsonMessage), nil)
 	// socket.ReadMessage()
 
 }
@@ -82,7 +82,7 @@ func (td *TestDriver) AddWaitToSelectedSockets(sockets ...*chat_app_infra.FakeWe
 	}
 }
 
-func (td *TestDriver) GetRoomData(uuid uuid.UUID) (room.BasicData, error) {
+func (td *TestDriver) GetRoomData(uuid uuid.UUID) (chat_socket.BasicData, error) {
 	return td.manager.GetRoomBasicData(uuid)
 }
 
