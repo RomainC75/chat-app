@@ -2,6 +2,7 @@ package manager
 
 import (
 	"chat/internal/modules/chat/domain/messages"
+	chat_room "chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_socket "chat/internal/modules/chat/domain/socket"
 
@@ -13,14 +14,14 @@ import (
 )
 
 type Manager struct {
-	rooms   *typedsyncmap.TSyncMap[uuid.UUID, *chat_socket.Room]
+	rooms   *typedsyncmap.TSyncMap[uuid.UUID, *chat_room.Room]
 	clients *typedsyncmap.TSyncMap[*chat_socket.Client, bool]
 	m       *sync.RWMutex
 }
 
 func NewManager() *Manager {
 	manager := Manager{
-		rooms:   typedsyncmap.NewSyncMap[uuid.UUID, *chat_socket.Room](),
+		rooms:   typedsyncmap.NewSyncMap[uuid.UUID, *chat_room.Room](),
 		clients: typedsyncmap.NewSyncMap[*chat_socket.Client, bool](),
 		m:       &sync.RWMutex{},
 	}
@@ -75,7 +76,7 @@ func (m *Manager) SendRoomMessage(c *chat_socket.Client, roomIdStr string, messa
 }
 
 func (m *Manager) CreateRoom(c *chat_socket.Client, roomName string) {
-	uuid, room := chat_socket.NewRoom(roomName, c)
+	uuid, room := chat_room.NewRoom(roomName, c)
 	m.rooms.Store(uuid, room)
 	clients := room.GetClients()
 	msg := chat_socket.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
@@ -93,7 +94,7 @@ func (m *Manager) CloseEveryClientConnections() {
 
 func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	listMap := map[uuid.UUID][]socket_shared.UserData{}
-	m.rooms.Range(func(uuid uuid.UUID, room *chat_socket.Room) bool {
+	m.rooms.Range(func(uuid uuid.UUID, room *chat_room.Room) bool {
 		basicData := room.GetBasicData()
 		listMap[basicData.Uuid] = room.GetClients()
 		return true
@@ -101,10 +102,10 @@ func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	return listMap
 }
 
-func (m *Manager) GetRoomBasicData(id uuid.UUID) (chat_socket.BasicData, error) {
-	var res chat_socket.BasicData
+func (m *Manager) GetRoomBasicData(id uuid.UUID) (chat_room.RoomBasicData, error) {
+	var res chat_room.RoomBasicData
 	err := errors.New("room not found")
-	m.rooms.Range(func(uuid uuid.UUID, room *chat_socket.Room) bool {
+	m.rooms.Range(func(uuid uuid.UUID, room *chat_room.Room) bool {
 		basicData := room.GetBasicData()
 		if basicData.Uuid == id {
 			res = basicData
@@ -126,9 +127,9 @@ func (m *Manager) ConnectUserAndRoom(c *chat_socket.Client, roomId uuid.UUID) er
 	return nil
 }
 
-func (m *Manager) FindRoomById(roomId uuid.UUID) (*chat_socket.Room, error) {
-	var foundRoom *chat_socket.Room
-	m.rooms.Range(func(uuid uuid.UUID, room *chat_socket.Room) bool {
+func (m *Manager) FindRoomById(roomId uuid.UUID) (*chat_room.Room, error) {
+	var foundRoom *chat_room.Room
+	m.rooms.Range(func(uuid uuid.UUID, room *chat_room.Room) bool {
 		if roomId == uuid {
 			foundRoom = room
 			return false

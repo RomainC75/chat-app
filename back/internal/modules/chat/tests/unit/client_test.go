@@ -3,6 +3,7 @@ package unit
 import (
 	"chat/internal/modules/chat/domain/manager"
 	"chat/internal/modules/chat/domain/messages"
+	chat_room "chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_socket "chat/internal/modules/chat/domain/socket"
 	chat_app_infra "chat/internal/modules/chat/infra"
@@ -80,7 +81,7 @@ func (td *TestDriver) AddWaitToSelectedSockets(sockets ...*chat_app_infra.FakeWe
 	}
 }
 
-func (td *TestDriver) GetRoomData(uuid uuid.UUID) (chat_socket.BasicData, error) {
+func (td *TestDriver) GetRoomData(uuid uuid.UUID) (chat_room.RoomBasicData, error) {
 	return td.manager.GetRoomBasicData(uuid)
 }
 
