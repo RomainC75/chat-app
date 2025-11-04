@@ -53,11 +53,9 @@ func (td *TestDriver) GetNextMessageToWriteUnserialized(socket *chat_app_infra.F
 	return messageOut
 }
 
-func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, messageIn messages.MessageIn) {
-	jsonMessage, _ := json.Marshal(messageIn)
-	socket.TriggerMessageIn(chat_socket.TextMessage, []byte(jsonMessage), nil)
+func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, commandMessageIn chat_socket.CommandMessageIn) {
+	socket.TriggerMessageIn(commandMessageIn)
 	// socket.ReadMessage()
-
 }
 
 func (td *TestDriver) WaitForNextMessageOut(socket *chat_app_infra.FakeWebSocket) (int, messages.MessageOut, error) {

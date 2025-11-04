@@ -65,12 +65,7 @@ func (fws *WebSocket) listenToNewMessages() {
 				// 	Err:         err,
 				// }
 
-				message, err := messages.UnMarshallMessageIn(payload)
-				if err != nil {
-					slog.Error("-> client : error unMarshalling the payload")
-				}
-
-				msg, err := fws.HandleMessageIn(message)
+				msg, err := fws.HandleMessageIn(payload)
 				if err != nil {
 					slog.Error("-> client : error handling the message in")
 					fws.sendErrorMessage()
@@ -81,7 +76,11 @@ func (fws *WebSocket) listenToNewMessages() {
 	}()
 }
 
-func (fws *WebSocket) HandleMessageIn(msg messages.MessageIn) (chat_socket.CommandMessageIn, error) {
+func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_socket.CommandMessageIn, error) {
+	msg, err := messages.UnMarshallMessageIn(payload)
+	if err != nil {
+		slog.Error("-> client : error unMarshalling the payload")
+	}
 	switch msg.Type {
 	case messages.BROADCAST_MESSAGE:
 
