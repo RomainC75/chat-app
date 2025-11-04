@@ -42,12 +42,14 @@ func (rm *RoomMessageIn) Execute(client *Client) {
 // -- Create Room Command
 
 type CreateRoomIn struct {
-	roomName string
+	roomName    string
+	description string
 }
 
-func NewCreateRoomIn(roomName string) *CreateRoomIn {
+func NewCreateRoomCommandMessageIn(roomName string, description string) *CreateRoomIn {
 	return &CreateRoomIn{
-		roomName: roomName,
+		roomName:    roomName,
+		description: description,
 	}
 }
 
@@ -70,4 +72,21 @@ func NewConnectToRoomIn(roomId string) *ConnectToRoomIn {
 func (ctr *ConnectToRoomIn) Execute(client *Client) {
 	roomUuid, _ := uuid.Parse(ctr.roomId)
 	client.ConnectUserToRoom(roomUuid)
+}
+
+// - send room message
+type SendRoomMessageIn struct {
+	roomId  uuid.UUID
+	message string
+}
+
+func NewSendRoomMessageIn(roomId uuid.UUID, message string) *SendRoomMessageIn {
+	return &SendRoomMessageIn{
+		roomId:  roomId,
+		message: message,
+	}
+}
+
+func (srm *SendRoomMessageIn) Execute(client *Client) {
+	client.SendRoomMessage(srm.roomId, srm.message)
 }

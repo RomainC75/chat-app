@@ -100,26 +100,28 @@ func TestClient(t *testing.T) {
 		td.Close()
 	})
 
-	t.Run("error message if wrong type", func(t *testing.T) {
-		td, user1ws := NewTestDriverAndConnectUser1()
+	// ! not handled by the domain -> check the infra
+	// t.Run("error message if wrong type", func(t *testing.T) {
+	// 	td, user1ws := NewTestDriverAndConnectUser1()
 
-		message := messages.BuildMessageIn("xxxxx", map[string]string{})
+	// 	message := messages.BuildMessageIn("xxxxx", map[string]string{})
 
-		td.AddWaitToSelectedSockets(user1ws)
-		td.TriggerMessageIn(user1ws, message)
-		_, messageToSend, _ := td.WaitForNextMessageOut(user1ws)
-		fmt.Println("--> ", messageToSend)
+	// 	td.AddWaitToSelectedSockets(user1ws)
+	// 	td.TriggerMessageIn(user1ws, message)
+	// 	_, messageToSend, _ := td.WaitForNextMessageOut(user1ws)
+	// 	fmt.Println("--> ", messageToSend)
 
-		assert.Equal(t, messageToSend.Type, messages.ERROR)
+	// 	assert.Equal(t, messageToSend.Type, messages.ERROR)
 
-		td.Close()
-	})
+	// 	td.Close()
+	// })
 
 	t.Run("users get notification when new user is connected", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
 		roomName := "newRoom"
-		message := messages.BuildACreateRoomMessageIn(roomName, "room descritpion")
+		// message := messages.BuildACreateRoomMessageIn(roomName, "room descritpion")
+		message := chat_socket.NewCreateRoomCommandMessageIn(roomName, "room descritpion")
 
 		td.AddWaitToSelectedSockets(user1ws)
 		td.TriggerMessageIn(user1ws, message)
@@ -144,7 +146,8 @@ func TestClient(t *testing.T) {
 
 		// user1 send a broadcast message
 		message := "broadcast_message content"
-		messageIn := messages.BuildBroadcastMessageIn(message)
+		// messageIn := messages.BuildBroadcastMessageIn(message)
+		messageIn := chat_socket.NewBroadcastMessageIn(message)
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		td.TriggerMessageIn(user1ws, messageIn)
 
@@ -171,7 +174,8 @@ func TestClient(t *testing.T) {
 		// user1 creates room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		roomName := "newRoom"
-		createRoomMessage := messages.BuildACreateRoomMessageIn(roomName, "room description")
+		// createRoomMessage := messages.BuildACreateRoomMessageIn(roomName, "room description")
+		createRoomMessage := chat_socket.NewCreateRoomCommandMessageIn(roomName, "room description")
 
 		td.TriggerMessageIn(user1ws, createRoomMessage)
 		_, messageOutToUser1, _ := td.WaitForNextMessageOut(user1ws)
@@ -194,7 +198,8 @@ func TestClient(t *testing.T) {
 
 		// user2 tries to connect to the room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
-		connectToRoomMessage := messages.BuildConnectToRoomMessageIn(newRoomIdStr)
+		// connectToRoomMessage := messages.BuildConnectToRoomMessageIn(newRoomIdStr)
+		connectToRoomMessage := chat_socket.NewConnectToRoomIn(newRoomIdStr)
 		td.TriggerMessageIn(user2ws, connectToRoomMessage)
 		_, messageOutToUser1, _ = td.WaitForNextMessageOut(user1ws)
 		_, messageOutToUser2, _ = td.WaitForNextMessageOut(user2ws)
@@ -226,7 +231,8 @@ func TestClient(t *testing.T) {
 		// user2 sends a message in the room
 		td.AddWaitToSelectedSockets(user1ws, user2ws)
 		privateMessage := "private message"
-		roomMessage := messages.BuildRoomMessageIn(newRoomId, privateMessage)
+		// roomMessage := messages.BuildRoomMessageIn(newRoomId, privateMessage)
+		roomMessage := chat_socket.NewSendRoomMessageIn(newRoomId, privateMessage)
 		td.TriggerMessageIn(user2ws, roomMessage)
 		_, messageOutToUser1, _ = td.WaitForNextMessageOut(user1ws)
 		_, messageOutToUser2, _ = td.WaitForNextMessageOut(user2ws)
