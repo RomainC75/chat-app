@@ -3,7 +3,7 @@ package controllers
 import (
 	chat_app "chat/internal/modules/chat/application"
 	socket_shared "chat/internal/modules/chat/domain/shared"
-	"chat/internal/modules/chat/domain/websocket"
+	chat_app_infra "chat/internal/modules/chat/infra"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 	user_management_infra "chat/internal/modules/user-management/infra"
 	"fmt"
@@ -42,7 +42,7 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 		Email: userEmail.(string),
 	}
 
-	websocket, err := websocket.NewWebSocket(w, r)
+	websocket, err := chat_app_infra.NewWebSocket(w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
