@@ -62,18 +62,6 @@ func (c *Client) GoListen() {
 				return
 			case commandMessageIn := <-c.conn.GetChan():
 				commandMessageIn.Execute(c)
-				// err := rawMessageIn.Err
-				// payload := rawMessageIn.P
-				// if err != nil {
-				// 	slog.Error("client disconnected", "err", err)
-				// 	c.manager.RemoveClient(c)
-				// }
-				// fmt.Println("----------> Message ", string(payload))
-				// message, err := messages.UnMarshallMessageIn(payload)
-				// if err != nil {
-				// 	slog.Error("-> client : error unMarshalling the payload")
-				// }
-				// c.HandleMessageIn(message)
 			}
 		}
 	}()
@@ -111,37 +99,11 @@ func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
 }
 
-func (c *Client) HandleMessageIn(msg messages.MessageIn) {
-	switch msg.Type {
-	case messages.BROADCAST_MESSAGE:
-		c.manager.SendBroadcastMessage(c.user, msg)
-	case messages.ROOM_MESSAGE:
-		c.manager.SendRoomMessage(c, msg.Content["room_id"], msg.Content["message"])
-	case messages.CREATE_ROOM:
-		c.manager.CreateRoom(c, msg.Content["name"])
-	case messages.CONNECT_TO_ROOM:
-		roomIdStr := msg.Content["room_id"]
-		roomId, _ := uuid.Parse(roomIdStr)
-		_ = c.manager.ConnectUserAndRoom(c, roomId)
-	default:
-		c.writeErrorMessage()
-		return
-	}
-}
-
 func (c *Client) writeHelloMessage() {
 	helloMessage := BuildMessageOut(messages.HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
 	bMessageOut, _ := json.Marshal(helloMessage)
-	c.conn.WriteMessage(TextMessage, bMessageOut)
-}
-
-func (c *Client) writeErrorMessage() {
-	badRequestMessage := BuildMessageOut(messages.ERROR, map[string]string{
-		"message": "bad request",
-	})
-	bMessageOut, _ := json.Marshal(badRequestMessage)
 	c.conn.WriteMessage(TextMessage, bMessageOut)
 }
 
