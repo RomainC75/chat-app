@@ -1,4 +1,4 @@
-package websocket
+package chat_app_infra
 
 import (
 	socket_shared "chat/internal/modules/chat/domain/shared"
