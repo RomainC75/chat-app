@@ -4,7 +4,6 @@ import (
 	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	"context"
-	"encoding/json"
 	"log"
 
 	"github.com/google/uuid"
@@ -12,23 +11,25 @@ import (
 
 type IManager interface {
 	RemoveClient(*Client)
-	SendBroadcastMessage(userData socket_shared.UserData, msgIn messages.MessageIn)
-	SendRoomMessage(c *Client, roomId string, message string)
-	CreateRoom(c *Client, roomName string)
+	BroadcastMessage(message *messages.Message)
+	SendRoomMessage(message *messages.Message)
+	CreateRoom(c *Client, roomName string, description string)
 	ConnectUserAndRoom(c *Client, roomId uuid.UUID) error
 }
 
 type IRoom interface {
 	GetId() uuid.UUID
+	GetName() string
 	GetClients() []socket_shared.UserData
 }
 
 type Client struct {
-	manager  IManager
-	room     IRoom
-	conn     IWebSocket
-	user     socket_shared.UserData
-	egress   chan ([]byte)
+	manager IManager
+	room    IRoom
+	conn    IWebSocket
+	user    socket_shared.UserData
+	egress  chan (*messages.Message)
+	// eventEgress chan (IEvents)
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }
@@ -39,7 +40,7 @@ func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserDat
 		manager:  manager,
 		conn:     conn,
 		user:     userData,
-		egress:   make(chan []byte),
+		egress:   make(chan *messages.Message),
 		cancelFn: cancel,
 		ctx:      ctx,
 	}
@@ -49,9 +50,13 @@ func (c *Client) PrepareToBeDeleted() {
 	c.cancelFn()
 }
 
-func (c *Client) SendToClient(msg messages.MessageOut) {
-	m, _ := json.Marshal(msg)
-	c.egress <- m
+func (c *Client) SendMessageToClient(message *messages.Message) {
+	c.egress <- message
+}
+
+func (c *Client) SendEventToClient(event IEvents) {
+	// c.egress <- messages.NewMessageFromBytes(m)
+	c.conn.WriteEvent(event)
 }
 
 func (c *Client) GoListen() {
@@ -99,35 +104,49 @@ func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
 }
 
-func (c *Client) writeHelloMessage() {
-	helloMessage := BuildMessageOut(messages.HELLO, map[string]string{
-		"message": "readyToCommunicate :-)",
-	})
-	bMessageOut, _ := json.Marshal(helloMessage)
-	c.conn.WriteTextMessage(bMessageOut)
+// === IN ===
+
+func (c *Client) BroadcastMessage(message *messages.Message) {
+	// bMessage := messages.BuildBroadcastMessageIn(message)
+	c.manager.BroadcastMessage(message)
 }
 
-func (c *Client) ConnectToRoom(room IRoom) {
-	c.room = room
-	roomUsers := room.GetClients()
-	message := BuildConnectedToRoomMessageOut(roomUsers, room.GetId())
-	bMessageOut, _ := json.Marshal(message)
-	c.conn.WriteTextMessage(bMessageOut)
+func (c *Client) SendRoomMessage(message *messages.Message) {
+	c.manager.SendRoomMessage(message)
 }
 
-func (c *Client) BroadcastMessage(message string) {
-	bMessage := messages.BuildBroadcastMessageIn(message)
-	c.manager.SendBroadcastMessage(c.user, bMessage)
-}
-
-func (c *Client) SendRoomMessage(roomId uuid.UUID, message string) {
-	c.manager.SendRoomMessage(c, roomId.String(), message)
-}
-
-func (c *Client) CreateRoom(roomName string) {
-	c.manager.CreateRoom(c, roomName)
+func (c *Client) CreateRoom(roomName string, description string) {
+	c.manager.CreateRoom(c, roomName, description)
 }
 
 func (c *Client) ConnectUserToRoom(roomId uuid.UUID) {
 	_ = c.manager.ConnectUserAndRoom(c, roomId)
 }
+
+// === OUT ===
+func (c *Client) writeHelloMessage() {
+	event := &HelloEvent{}
+	c.conn.WriteEvent(event)
+}
+
+func (c *Client) ConnectToRoom(room IRoom) {
+	event := &ConnectedToRoomEvent{
+		Users:    c.room.GetClients(),
+		RoomName: c.room.GetName(),
+		RoomId:   room.GetId(),
+	}
+	c.conn.WriteEvent(event)
+}
+
+func (c *Client) SendRoomCreatedMessage(room IRoom) {
+	event := &NewRoomCreatedEvent{
+		roomName: c.room.GetName(),
+		roomId:   room.GetId(),
+	}
+	c.conn.WriteEvent(event)
+}
+
+// func (c *Client) SendRoomCreatedMessage(room IRoom) {
+// 	message := messages.NewMessage(uuid.NullUUID)
+// 	c.conn.WriteTextMessage(bMessageOut)
+// }
