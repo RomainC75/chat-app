@@ -30,14 +30,17 @@ func NewManager() *Manager {
 
 func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.UserData) {
 	client := chat_client.NewClient(m, conn, userData)
-	m.AddClient(client)
+	m.ConnectNewCient(client)
 	// m.NotifyClientStateOfRoomsAndGames(client)
 }
 
-func (m *Manager) AddClient(c *chat_client.Client) {
+func (m *Manager) ConnectNewCient(c *chat_client.Client) {
 	c.GoListen()
 	c.GoWrite()
-	m.Broadcast(chat_client.BuildNewMemberConnectedMessageOut(c.GetUserData()))
+	newUserConnectedEvent := &chat_client.NewUserConnectedEvent{
+		UserData: c.GetUserData(),
+	}
+	m.BroadcastEvent(newUserConnectedEvent)
 	m.clients.Store(c, true)
 }
 
@@ -46,42 +49,39 @@ func (m *Manager) RemoveClient(client *chat_client.Client) {
 	m.clients.Delete(client)
 }
 
-func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn messages.MessageIn) {
-	bMessage := chat_client.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
+// func (m *Manager) SendBroadcastMessage(userData socket_shared.UserData, msgIn messages.MessageIn) {
+// 	bMessage := chat_client.BuildBroadcastMessageOut(userData, msgIn.Content["message"])
+// 	m.clients.Range(func(client *chat_client.Client, value bool) bool {
+// 		client.SendToClient(bMessage)
+// 		return true
+// 	})
+// }
+
+func (m *Manager) BroadcastMessage(message *messages.Message) {
 	m.clients.Range(func(client *chat_client.Client, value bool) bool {
-		client.SendToClient(bMessage)
+		client.SendMessageToClient(message)
 		return true
 	})
 }
 
-func (m *Manager) Broadcast(msgOut messages.MessageOut) {
+func (m *Manager) BroadcastEvent(event chat_client.IEvents) {
 	m.clients.Range(func(client *chat_client.Client, value bool) bool {
-		client.SendToClient(msgOut)
+		client.SendEventToClient(event)
 		return true
 	})
 }
 
-func (m *Manager) SendRoomMessage(c *chat_client.Client, roomIdStr string, message string) {
-	roomUuid, err := uuid.Parse(roomIdStr)
+func (m *Manager) SendRoomMessage(message *messages.Message) {
+	foundRoom, err := m.FindRoomById(message.RoomID())
 	if err != nil {
 		return
 	}
-	foundRoom, err := m.FindRoomById(roomUuid)
-	if err != nil {
-		return
-	}
-	roomMessage := chat_client.BuildRoomMessageOut(roomUuid, c.GetUserData(), message)
-	foundRoom.Broadcast(roomMessage)
-
+	foundRoom.Broadcast(message)
 }
 
-func (m *Manager) CreateRoom(c *chat_client.Client, roomName string) {
-	uuid, room := chat_room.NewRoom(roomName, c)
+func (m *Manager) CreateRoom(c *chat_client.Client, roomName string, description string) {
+	uuid, room := chat_room.NewRoom(roomName, description, c)
 	m.rooms.Store(uuid, room)
-	clients := room.GetClients()
-	msg := chat_client.BuildNewRoomCreatedMessageOut(roomName, uuid, clients)
-	// ! connectUserAndRoom()
-	m.Broadcast(msg)
 }
 
 func (m *Manager) CloseEveryClientConnections() {
@@ -140,4 +140,11 @@ func (m *Manager) FindRoomById(roomId uuid.UUID) (*chat_room.Room, error) {
 		return nil, errors.New("room not found")
 	}
 	return foundRoom, nil
+}
+
+func (m *Manager) BroadcastRoomCreatedMessage(room *chat_room.Room) {
+	m.clients.Range(func(c *chat_client.Client, value bool) bool {
+		c.SendRoomCreatedMessage(room)
+		return true
+	})
 }

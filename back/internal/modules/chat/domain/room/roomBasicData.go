@@ -7,7 +7,8 @@ import (
 )
 
 type RoomBasicData struct {
-	Uuid      uuid.UUID
-	Name      string
-	CreatedAt time.Time
+	Uuid        uuid.UUID
+	Name        string
+	Description string
+	CreatedAt   time.Time
 }

@@ -16,12 +16,13 @@ type Room struct {
 	// messages
 }
 
-func NewRoom(name string, c *chat_client.Client) (uuid.UUID, *Room) {
+func NewRoom(name string, description string, c *chat_client.Client) (uuid.UUID, *Room) {
 	uuid := uuid.New()
 	basicData := RoomBasicData{
-		Uuid:      uuid,
-		Name:      name,
-		CreatedAt: time.Now(),
+		Uuid:        uuid,
+		Name:        name,
+		Description: description,
+		CreatedAt:   time.Now(),
 	}
 	room := &Room{
 		basicData: basicData,
@@ -32,8 +33,13 @@ func NewRoom(name string, c *chat_client.Client) (uuid.UUID, *Room) {
 }
 
 func (r *Room) AddClient(c *chat_client.Client) {
-	notificationMessage := chat_client.BuildNewUserConnectedToRoomMessageOut(c.GetUserData(), r.basicData.Uuid)
-	r.Broadcast(notificationMessage)
+	connectedToRoomEvent := chat_client.ConnectedToRoomEvent{
+		Users:    []socket_shared.UserData{c.GetUserData()},
+		RoomName: r.GetName(),
+		RoomId:   r.GetId(),
+	}
+	r.BroadcastEvent(connectedToRoomEvent)
+
 	r.clients.Store(c, true)
 }
 
@@ -47,6 +53,20 @@ func (r *Room) GetClients() []socket_shared.UserData {
 	return clients
 }
 
+func (r *Room) Broadcast(message *messages.Message) {
+	r.clients.Range(func(c *chat_client.Client, value bool) bool {
+		c.SendMessageToClient(message)
+		return true
+	})
+}
+
+func (r *Room) BroadcastEvent(event chat_client.IEvents) {
+	r.clients.Range(func(c *chat_client.Client, value bool) bool {
+		c.SendEventToClient(event)
+		return true
+	})
+}
+
 func (r *Room) GetBasicData() RoomBasicData {
 	return r.basicData
 }
@@ -55,9 +75,6 @@ func (r *Room) GetId() uuid.UUID {
 	return r.basicData.Uuid
 }
 
-func (r *Room) Broadcast(message messages.MessageOut) {
-	r.clients.Range(func(c *chat_client.Client, value bool) bool {
-		c.SendToClient(message)
-		return true
-	})
+func (r *Room) GetName() string {
+	return r.basicData.Name
 }

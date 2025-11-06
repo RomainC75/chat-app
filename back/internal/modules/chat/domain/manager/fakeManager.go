@@ -1,4 +1,4 @@
-package chat_socket
+package manager
 
 import (
 	chat_client "chat/internal/modules/chat/domain/client"
@@ -24,10 +24,10 @@ func (m *FakeManager) AddClient(c *chat_client.Client) {
 func (fm *FakeManager) RemoveClient(c *chat_client.Client) {
 
 }
-func (fm *FakeManager) SendBroadcastMessage(msgIn messages.MessageIn) {
+func (fm *FakeManager) SendBroadcastMessage(message *messages.Message) {
 
 }
-func (fm *FakeManager) SendRoomMessage(msgIn messages.MessageIn) {
+func (fm *FakeManager) SendRoomMessage(message *messages.Message) {
 
 }
 func (fm *FakeManager) CreateRoom(c *chat_client.Client, roomName string) {
