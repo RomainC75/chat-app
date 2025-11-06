@@ -3,6 +3,8 @@ package chat_app_infra
 import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 type FakeWebSocket struct {
@@ -35,7 +37,7 @@ func (fws *FakeWebSocket) TriggerMessageIn(ICommandMessageIn chat_client.IComman
 	fws.readChan <- ICommandMessageIn
 }
 func (fws *FakeWebSocket) WriteTextMessage(data []byte) error {
-	fws.nextMessageTypeToWrite = TextMessage
+	fws.nextMessageTypeToWrite = websocket.TextMessage
 	fws.nextMessageToWrite = data
 	fws.wg.Done()
 	return nil
