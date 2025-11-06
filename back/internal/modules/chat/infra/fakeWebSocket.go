@@ -2,6 +2,8 @@ package chat_app_infra
 
 import (
 	chat_client "chat/internal/modules/chat/domain/client"
+	"chat/internal/modules/chat/domain/messages"
+	"encoding/json"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -10,7 +12,8 @@ import (
 type FakeWebSocket struct {
 	nextMessageType        int
 	nextMessageTypeToWrite int
-	nextMessageToWrite     []byte
+	nextMessageToWrite     *messages.Message
+	nextInfoMessageToWrite []byte
 
 	readChan chan (chat_client.ICommandMessageIn)
 	wg       *sync.WaitGroup
@@ -36,16 +39,29 @@ func (fws *FakeWebSocket) WaitAdd() {
 func (fws *FakeWebSocket) TriggerMessageIn(ICommandMessageIn chat_client.ICommandMessageIn) {
 	fws.readChan <- ICommandMessageIn
 }
-func (fws *FakeWebSocket) WriteTextMessage(data []byte) error {
+func (fws *FakeWebSocket) WriteTextMessage(message *messages.Message) error {
 	fws.nextMessageTypeToWrite = websocket.TextMessage
-	fws.nextMessageToWrite = data
+	fws.nextMessageToWrite = message
+	fws.wg.Done()
+	return nil
+}
+
+func (fws *FakeWebSocket) WriteInfoMessage(messageType string, content map[string]string) error {
+	data := BuildMessageOut(MessageOutType(messageType), content)
+	fws.nextMessageTypeToWrite = websocket.TextMessage
+	b, _ := json.Marshal(data)
+	fws.nextInfoMessageToWrite = b
 	fws.wg.Done()
 	return nil
 }
 
 // ? 4 listen to the answers
-func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, p []byte, err error) {
+func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, message *messages.Message, err error) {
 	return fws.nextMessageType, fws.nextMessageToWrite, nil
+}
+
+func (fws *FakeWebSocket) GetNextInfoMessageToWrite() (messageType int, p []byte, err error) {
+	return fws.nextMessageType, fws.nextInfoMessageToWrite, nil
 }
 
 func (fws *FakeWebSocket) GetChan() chan (chat_client.ICommandMessageIn) {
@@ -57,5 +73,21 @@ func (fws *FakeWebSocket) GetWG() *sync.WaitGroup {
 }
 
 func (fws *FakeWebSocket) WriteCloseMessage() error {
+	return nil
+}
+
+func (fws *FakeWebSocket) WriteEvent(event chat_client.IEvents) error {
+	event.Execute(fws)
+	return nil
+}
+
+func (fws *FakeWebSocket) WriteHelloMessage() error {
+	data := BuildMessageOut(HELLO, map[string]string{
+		"message": "readyToCommunicate :-)",
+	})
+	fws.nextMessageTypeToWrite = websocket.TextMessage
+	b, _ := json.Marshal(data)
+	fws.nextInfoMessageToWrite = b
+	fws.wg.Done()
 	return nil
 }
