@@ -30,7 +30,7 @@ type NewUserConnectedEvent struct {
 }
 
 func (nuce NewUserConnectedEvent) Execute(conn IWebSocket) {
-	conn.WriteInfoMessage("NEW_USER_CONNECTED", map[string]string{
+	conn.WriteInfoMessage("NEW_USER_CONNECTED_TO_CHAT", map[string]string{
 		"user_id":   fmt.Sprintf("%d", nuce.Id),
 		"room_name": nuce.Email,
 	})

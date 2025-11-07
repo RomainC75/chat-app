@@ -16,8 +16,8 @@ func BuildMessageOut(mType MessageOutType, content map[string]string) MessageOut
 	return mo
 }
 
-func BuildNewMemberConnectedMessageOut(senderUserData socket_shared.UserData) MessageOut {
-	return BuildMessageOut(NEW_MEMBER_CONNECTED, map[string]string{
+func BuildNewUserConnectedToChatMessageOut(senderUserData socket_shared.UserData) MessageOut {
+	return BuildMessageOut(NEW_USER_CONNECTED_TO_CHAT, map[string]string{
 		"user_id":    strconv.Itoa(int(senderUserData.Id)),
 		"user_email": senderUserData.Email,
 	})
