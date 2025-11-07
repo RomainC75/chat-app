@@ -82,6 +82,11 @@ func (m *Manager) SendRoomMessage(message *messages.Message) {
 func (m *Manager) CreateRoom(c *chat_client.Client, roomName string, description string) {
 	uuid, room := chat_room.NewRoom(roomName, description, c)
 	m.rooms.Store(uuid, room)
+	roomCreatedEvent := &chat_client.RoomCreatedEvent{
+		RoomId:   uuid,
+		RoomName: roomName,
+	}
+	m.BroadcastEvent(roomCreatedEvent)
 }
 
 func (m *Manager) CloseEveryClientConnections() {
