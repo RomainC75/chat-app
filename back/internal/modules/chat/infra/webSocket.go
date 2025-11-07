@@ -131,7 +131,7 @@ func (fws *WebSocket) sendErrorMessage() {
 	fws.conn.WriteMessage(websocket.TextMessage, bMessageOut)
 }
 
-func (fws *WebSocket) WriteTextMessage(message messages.Message) error {
+func (fws *WebSocket) WriteTextMessage(message *messages.Message) error {
 	data := BuildMessageOut(HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
@@ -151,4 +151,9 @@ func (fws *WebSocket) WriteInfoMessage(messageType string, content map[string]st
 	data := BuildMessageOut(MessageOutType(messageType), content)
 	bMessageOut, _ := json.Marshal(data)
 	return fws.conn.WriteMessage(websocket.TextMessage, bMessageOut)
+}
+
+func (fws *WebSocket) WriteEvent(event chat_client.IEvents) error {
+	event.Execute(fws)
+	return nil
 }
