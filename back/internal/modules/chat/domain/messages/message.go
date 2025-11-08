@@ -9,6 +9,14 @@ import (
 // -- room message
 // -- broadcast message
 
+type MessageSnapshot struct {
+	ID        uuid.UUID
+	RoomID    uuid.UUID
+	UserId    int32
+	Content   string
+	CreatedAt time.Time
+}
+
 type Message struct {
 	id        uuid.UUID
 	roomID    uuid.UUID
@@ -40,4 +48,22 @@ type ConnectToRoomMessage struct {
 
 func (m *Message) RoomID() uuid.UUID {
 	return m.roomID
+}
+
+func (m *Message) String() string {
+	return m.content
+}
+
+func (m *Message) UserId() int32 {
+	return m.userId
+}
+
+func (m *Message) ToSnapshot() MessageSnapshot {
+	return MessageSnapshot{
+		ID:        m.id,
+		RoomID:    m.roomID,
+		UserId:    m.userId,
+		Content:   m.content,
+		CreatedAt: m.createdAt,
+	}
 }
