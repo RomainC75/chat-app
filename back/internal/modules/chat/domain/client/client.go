@@ -4,7 +4,6 @@ import (
 	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	"context"
-	"log"
 
 	"github.com/google/uuid"
 )
@@ -36,7 +35,8 @@ type Client struct {
 
 func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Client{
+
+	client := &Client{
 		manager:  manager,
 		conn:     conn,
 		user:     userData,
@@ -44,6 +44,8 @@ func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserDat
 		cancelFn: cancel,
 		ctx:      ctx,
 	}
+	client.WriteHelloMessage()
+	return client
 }
 
 func (c *Client) PrepareToBeDeleted() {
@@ -51,11 +53,10 @@ func (c *Client) PrepareToBeDeleted() {
 }
 
 func (c *Client) SendMessageToClient(message *messages.Message) {
-	c.egress <- message
+	c.conn.WriteTextMessage(message)
 }
 
 func (c *Client) SendEventToClient(event IEvents) {
-	// c.egress <- messages.NewMessageFromBytes(m)
 	c.conn.WriteEvent(event)
 }
 
@@ -72,33 +73,33 @@ func (c *Client) GoListen() {
 	}()
 }
 
-func (c *Client) GoWrite() {
-	c.writeHelloMessage()
-	go func() {
-		defer func() {
-			c.manager.RemoveClient(c)
-		}()
+// func (c *Client) GoWrite() {
+// 	c.writeHelloMessage()
+// 	go func() {
+// 		defer func() {
+// 			c.manager.RemoveClient(c)
+// 		}()
 
-		for {
-			select {
-			case <-c.ctx.Done():
-				return
-			case message, ok := <-c.egress:
-				if !ok {
-					if err := c.conn.WriteCloseMessage(); err != nil {
-						log.Println("connection closed:", err)
-					}
-					continue
-				}
+// 		for {
+// 			select {
+// 			case <-c.ctx.Done():
+// 				return
+// 			case message, ok := <-c.egress:
+// 				if !ok {
+// 					if err := c.conn.WriteCloseMessage(); err != nil {
+// 						log.Println("connection closed:", err)
+// 					}
+// 					continue
+// 				}
 
-				if err := c.conn.WriteTextMessage(message); err != nil {
-					log.Printf("failed to send message: %v\n", err)
-				}
-				log.Println("message sent")
-			}
-		}
-	}()
-}
+// 				if err := c.conn.WriteTextMessage(message); err != nil {
+// 					log.Printf("failed to send message: %v\n", err)
+// 				}
+// 				log.Println("message sent")
+// 			}
+// 		}
+// 	}()
+// }
 
 func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
@@ -124,7 +125,7 @@ func (c *Client) ConnectUserToRoom(roomId uuid.UUID) {
 }
 
 // === OUT ===
-func (c *Client) writeHelloMessage() {
+func (c *Client) WriteHelloMessage() {
 	event := &HelloEvent{}
 	c.conn.WriteEvent(event)
 }

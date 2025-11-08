@@ -37,7 +37,7 @@ func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.Us
 
 func (m *Manager) ConnectNewCient(c *chat_client.Client) {
 	c.GoListen()
-	c.GoWrite()
+	// c.GoWrite()
 	newUserConnectedEvent := &chat_client.NewUserConnectedEvent{
 		UserData: c.GetUserData(),
 	}

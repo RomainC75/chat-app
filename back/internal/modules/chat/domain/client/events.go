@@ -65,6 +65,20 @@ func (ctr ConnectedToRoomEvent) Execute(conn IWebSocket) {
 	})
 }
 
+type NewUserConnectedToRoomEvent struct {
+	Users    []socket_shared.UserData
+	RoomName string
+	RoomId   uuid.UUID
+}
+
+func (ctr NewUserConnectedToRoomEvent) Execute(conn IWebSocket) {
+	conn.WriteInfoMessage("NEW_USER_CONNECTED_TO_ROOM", map[string]string{
+		"users":    fmt.Sprintf("%v", ctr.Users),
+		"roomName": ctr.RoomName,
+		"roomId":   ctr.RoomId.String(),
+	})
+}
+
 // ==
 type NewRoomCreatedEvent struct {
 	roomName string
