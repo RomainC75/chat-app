@@ -2,6 +2,7 @@ package chat_client
 
 import (
 	socket_shared "chat/internal/modules/chat/domain/shared"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -15,12 +16,15 @@ type IEvents interface {
 type RoomCreatedEvent struct {
 	RoomId   uuid.UUID
 	RoomName string
+	Users    []socket_shared.UserData
 }
 
 func (rc RoomCreatedEvent) Execute(conn IWebSocket) {
+	users, _ := json.Marshal(rc.Users)
 	conn.WriteInfoMessage("ROOM_CREATED", map[string]string{
 		"room_id":   rc.RoomId.String(),
 		"room_name": rc.RoomName,
+		"users":     string(users),
 	})
 }
 
