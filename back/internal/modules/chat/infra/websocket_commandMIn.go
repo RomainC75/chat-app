@@ -3,6 +3,7 @@ package chat_app_infra
 import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,8 +22,9 @@ func NewBroadcastMessageIn(content string) *BroadcastMessageIn {
 }
 
 func (bm *BroadcastMessageIn) Execute(c *chat_client.Client) {
+	fmt.Println("-->. broadcast command message In")
 	uuid.New()
-	message := messages.NewMessage(uuid.New(), uuid.Nil, c.GetUserData().Id, bm.Content, time.Now())
+	message := messages.NewMessage(uuid.New(), uuid.Nil, c.GetUserData().Id, c.GetUserData().Email, bm.Content, time.Now())
 	c.BroadcastMessage(message)
 }
 
@@ -41,8 +43,8 @@ func NewRoomMessageIn(roomId uuid.UUID, message string) *RoomMessageIn {
 }
 
 func (rm *RoomMessageIn) Execute(client *chat_client.Client) {
-
-	message := messages.NewMessage(uuid.New(), rm.RoomId, client.GetUserData().Id, rm.Message, time.Now())
+	fmt.Println("-->. new room command message In")
+	message := messages.NewMessage(uuid.New(), rm.RoomId, client.GetUserData().Id, client.GetUserData().Email, rm.Message, time.Now())
 	client.SendRoomMessage(message)
 }
 
@@ -61,6 +63,7 @@ func NewCreateRoomICommandMessageIn(roomName string, description string) *Create
 }
 
 func (cr *CreateRoomIn) Execute(client *chat_client.Client) {
+	fmt.Println("-->. create room command message In")
 	client.CreateRoom(cr.RoomName, cr.Description)
 }
 
@@ -77,5 +80,6 @@ func NewConnectToRoomIn(roomId uuid.UUID) *ConnectToRoomIn {
 }
 
 func (ctr *ConnectToRoomIn) Execute(client *chat_client.Client) {
+	fmt.Println("-->. connect to room command message In")
 	client.ConnectUserToRoom(ctr.RoomId)
 }

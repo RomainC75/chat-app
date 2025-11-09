@@ -58,8 +58,9 @@ type ConnectedToRoomEvent struct {
 }
 
 func (ctr ConnectedToRoomEvent) Execute(conn IWebSocket) {
+	usersB, _ := json.Marshal(ctr.Users)
 	conn.WriteInfoMessage("CONNECTED_TO_ROOM", map[string]string{
-		"users":    fmt.Sprintf("%v", ctr.Users),
+		"users":    string(usersB),
 		"roomName": ctr.RoomName,
 		"roomId":   ctr.RoomId.String(),
 	})
@@ -67,13 +68,17 @@ func (ctr ConnectedToRoomEvent) Execute(conn IWebSocket) {
 
 type NewUserConnectedToRoomEvent struct {
 	Users    []socket_shared.UserData
+	NewUser  socket_shared.UserData
 	RoomName string
 	RoomId   uuid.UUID
 }
 
 func (ctr NewUserConnectedToRoomEvent) Execute(conn IWebSocket) {
+	usersB, _ := json.Marshal(ctr.Users)
+	newUserB, _ := json.Marshal(ctr.NewUser)
 	conn.WriteInfoMessage("NEW_USER_CONNECTED_TO_ROOM", map[string]string{
-		"users":    fmt.Sprintf("%v", ctr.Users),
+		"users":    string(usersB),
+		"new_user": string(newUserB),
 		"roomName": ctr.RoomName,
 		"roomId":   ctr.RoomId.String(),
 	})

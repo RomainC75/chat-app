@@ -23,29 +23,24 @@ type IRoom interface {
 }
 
 type Client struct {
-	manager IManager
-	room    IRoom
-	conn    IWebSocket
-	user    socket_shared.UserData
-	// egress  chan (*messages.Message)
-	// eventEgress chan (IEvents)
+	manager  IManager
+	room     IRoom
+	conn     IWebSocket
+	user     socket_shared.UserData
 	cancelFn context.CancelFunc
 	ctx      context.Context
 }
 
 func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
-
 	c := &Client{
-		manager: manager,
-		conn:    conn,
-		user:    userData,
-		// egress:   make(chan *messages.Message),
+		manager:  manager,
+		conn:     conn,
+		user:     userData,
 		cancelFn: cancel,
 		ctx:      ctx,
 	}
-	// c.GoListen()
-	// c.GoWrite()
+	conn.LinkToClient(c)
 	c.WriteHelloMessage()
 	return c
 }
@@ -64,45 +59,7 @@ func (c *Client) SendEventToClient(event IEvents) {
 
 func (c *Client) ListenToMessageIn(commandMessageIn ICommandMessageIn) {
 	commandMessageIn.Execute(c)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-c.ctx.Done():
-	// 			return
-	// 		case ICommandMessageIn := <-c.conn.GetChan():
-	// 			ICommandMessageIn.Execute(c)
-	// 		}
-	// 	}
-	// }()
 }
-
-// func (c *Client) GoWrite() {
-// 	c.writeHelloMessage()
-// 	go func() {
-// 		defer func() {
-// 			c.manager.RemoveClient(c)
-// 		}()
-
-// 		for {
-// 			select {
-// 			case <-c.ctx.Done():
-// 				return
-// 			case message, ok := <-c.egress:
-// 				if !ok {
-// 					if err := c.conn.WriteCloseMessage(); err != nil {
-// 						log.Println("connection closed:", err)
-// 					}
-// 					continue
-// 				}
-
-// 				if err := c.conn.WriteTextMessage(message); err != nil {
-// 					log.Printf("failed to send message: %v\n", err)
-// 				}
-// 				log.Println("message sent")
-// 			}
-// 		}
-// 	}()
-// }
 
 func (c *Client) GetUserData() socket_shared.UserData {
 	return c.user
@@ -133,6 +90,7 @@ func (c *Client) WriteHelloMessage() {
 }
 
 func (c *Client) ConnectToRoom(room IRoom) {
+	c.room = room
 	event := &ConnectedToRoomEvent{
 		Users:    c.room.GetClients(),
 		RoomName: c.room.GetName(),

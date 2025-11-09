@@ -33,13 +33,14 @@ func NewRoom(name string, description string, c *chat_client.Client) (uuid.UUID,
 }
 
 func (r *Room) AddClient(c *chat_client.Client) {
+	r.clients.Store(c, true)
 	newUserConnectedToRoomEvent := chat_client.NewUserConnectedToRoomEvent{
 		Users:    r.GetClients(),
+		NewUser:  c.GetUserData(),
 		RoomName: r.GetName(),
 		RoomId:   r.GetId(),
 	}
 	r.BroadcastEvent(newUserConnectedToRoomEvent)
-	r.clients.Store(c, true)
 
 	connectedToRoomEvent := chat_client.ConnectedToRoomEvent{
 		Users:    r.GetClients(),
