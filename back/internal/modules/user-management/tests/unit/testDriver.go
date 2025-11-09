@@ -18,6 +18,7 @@ var (
 	HashedPassword = "hashedPassword"
 	existingEmail  = "existing@example.com"
 	ExistingUser   = user_management_domain.NewUser(uuid.MustParse("d61142ad-ed2d-4db1-9c3f-4f0f7cf1c565"), existingEmail, "otherHashedPassword", time.Date(2025, time.November, 10, 23, 0, 0, 0, time.UTC))
+	fakeToken      = "fakeToken"
 )
 
 type TestDriver struct {
@@ -59,6 +60,17 @@ func (td *TestDriver) CreateUser(email string, password string) (user_management
 
 	ctx := context.Background()
 	return td.UserSrv.CreateUserSrv(ctx, requests.SignupRequest{
+		Email:    email,
+		Password: password,
+	})
+}
+
+func (td *TestDriver) LoginUser(email string, password string, expectedBcrypCompareResult bool) (user_management_app.LogResponse, error) {
+	ctx := context.Background()
+	td.fakeJwt.ExpectedToken = fakeToken
+	td.fakeBcryp.ExpectedCompareResult = expectedBcrypCompareResult
+
+	return td.UserSrv.LogUserSrv(ctx, requests.LoginRequest{
 		Email:    email,
 		Password: password,
 	})

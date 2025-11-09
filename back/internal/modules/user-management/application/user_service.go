@@ -13,8 +13,8 @@ import (
 )
 
 type LogResponse struct {
-	Id    int32  `json:"id"`
-	Token string `json:"token"`
+	Id    uuid.UUID `json:"id"`
+	Token string    `json:"token"`
 }
 
 type BasicUserResponse struct {
@@ -86,12 +86,12 @@ func (userSrv *UserSrv) CreateUserSrv(ctx context.Context, user requests.SignupR
 func (userSrv *UserSrv) LogUserSrv(ctx context.Context, user requests.LoginRequest) (LogResponse, error) {
 	foundUser, err := userSrv.userRepo.FindUserByEmail(ctx, user.Email)
 	if err != nil {
-		return LogResponse{}, errors.New("user not found")
+		return LogResponse{}, errors.New("wrong email or password")
 	}
 
 	err = foundUser.IsAuthenticated(userSrv.bcrypt.ComparePasswords, user.Password)
 	if err != nil {
-		return LogResponse{}, errors.New("wrong password")
+		return LogResponse{}, errors.New("wrong email or password")
 	}
 
 	token, err := foundUser.GetToken(userSrv.jwt.Generate)
@@ -100,7 +100,7 @@ func (userSrv *UserSrv) LogUserSrv(ctx context.Context, user requests.LoginReque
 	}
 
 	return LogResponse{
-		Id:    int32(foundUser.GetID().ID()),
+		Id:    foundUser.GetID(),
 		Token: token,
 	}, nil
 }

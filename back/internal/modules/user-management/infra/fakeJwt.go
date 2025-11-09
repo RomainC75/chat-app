@@ -6,7 +6,7 @@ import (
 )
 
 type FakeJWT struct {
-	ExpectedJwt string
+	ExpectedToken string
 }
 
 func NewFakeJWT() *FakeJWT {
@@ -14,7 +14,7 @@ func NewFakeJWT() *FakeJWT {
 }
 
 func (f *FakeJWT) Generate(user *user_management_domain.User) (string, error) {
-	return f.ExpectedJwt, nil
+	return f.ExpectedToken, nil
 }
 
 func (f *FakeJWT) GetClaimsFromToken(tokenString string) (user_management_encrypt.JwtClaim, error) {
