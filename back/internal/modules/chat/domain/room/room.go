@@ -89,3 +89,8 @@ func (r *Room) GetId() uuid.UUID {
 func (r *Room) GetName() string {
 	return r.basicData.Name
 }
+
+func (r *Room) RemoveClient(c *chat_client.Client) {
+	r.clients.Delete(c)
+	// ! notify members in the room
+}

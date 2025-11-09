@@ -111,3 +111,7 @@ func (c *Client) SendRoomCreatedMessage(room IRoom) {
 	}
 	c.conn.WriteEvent(event)
 }
+
+func (c *Client) RemoveClient() {
+	c.manager.RemoveClient(c)
+}

@@ -49,6 +49,7 @@ const (
 	CONNECTED_TO_ROOM          MessageOutType = "CONNECTED_TO_ROOM"
 	NEW_USER_CONNECTED_TO_ROOM MessageOutType = "NEW_USER_CONNECTED_TO_ROOM"
 	DISCONNECTED_FROM_ROOM     MessageOutType = "DISCONNECTED_FROM_ROOM"
+	USER_DISCONNECTED          MessageOutType = "USER_DISCONNECTED"
 	ERROR                      MessageOutType = "ERROR"
 )
 

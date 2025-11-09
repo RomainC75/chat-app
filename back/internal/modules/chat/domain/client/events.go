@@ -96,3 +96,16 @@ func (nrce NewRoomCreatedEvent) Execute(conn IWebSocket) {
 		"roomId":   nrce.roomId.String(),
 	})
 }
+
+// ==
+
+type UserDisconnectedEvent struct {
+	UserData socket_shared.UserData
+}
+
+func (ude UserDisconnectedEvent) Execute(conn IWebSocket) {
+	conn.WriteInfoMessage("USER_DISCONNECTED", map[string]string{
+		"user_id":    fmt.Sprintf("%d", ude.UserData.Id),
+		"user_email": ude.UserData.Email,
+	})
+}

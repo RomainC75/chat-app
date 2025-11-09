@@ -67,3 +67,7 @@ func (fws *FakeWebSocket) GetNextInfoMessageToWrite() (messageType int, p []byte
 func (fws *FakeWebSocket) WriteCloseMessage() error {
 	return nil
 }
+
+func (fws *FakeWebSocket) CloseConnection() {
+	fws.client.RemoveClient()
+}

@@ -70,9 +70,21 @@ func (m *Manager) BroadcastRoomCreatedMessage(room *chat_room.Room) {
 	})
 }
 
-func (m *Manager) RemoveClient(client *chat_client.Client) {
-	client.PrepareToBeDeleted()
-	m.clients.Delete(client)
+func (m *Manager) RemoveClient(c *chat_client.Client) {
+	m.clients.Delete(c)
+	m.RemoveClientFromRooms(c)
+	c.PrepareToBeDeleted()
+	userDisconnectedEvent := &chat_client.UserDisconnectedEvent{
+		UserData: c.GetUserData(),
+	}
+	m.BroadcastEvent(userDisconnectedEvent)
+}
+
+func (m *Manager) RemoveClientFromRooms(c *chat_client.Client) {
+	m.rooms.Range(func(roomId uuid.UUID, room *chat_room.Room) bool {
+		room.RemoveClient(c)
+		return true
+	})
 }
 
 func (m *Manager) CloseEveryClientConnections() {
