@@ -13,13 +13,13 @@ func NewInMemoryBcrypt() *Bcrypt {
 	return &Bcrypt{}
 }
 
-func (b *Bcrypt) HashAndSalt(pwd string) (string, error) {
+func (b *Bcrypt) HashAndSalt(pwd string) ([]byte, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return nil, err
 	}
-	return string(hash), nil
+	return hash, nil
 }
 
 func (b *Bcrypt) ComparePasswords(hashedPwd string, receivedPwd string) error {
