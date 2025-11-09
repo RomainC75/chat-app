@@ -34,6 +34,12 @@ func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket)
 	return td, user1socket
 }
 
+func NewTestDriverWith2Users() (*TestDriver, *chat_app_infra.FakeWebSocket, *chat_app_infra.FakeWebSocket) {
+	td, user1socket := NewTestDriverAndConnectUser1()
+	user2socket := td.CreateNewClient(2, "alice@email.com")
+	return td, user1socket, user2socket
+}
+
 func (td *TestDriver) SetNextUuid(nextUuid uuid.UUID) {
 	td.fakeUuidGen.ExpectedUUID = nextUuid
 }

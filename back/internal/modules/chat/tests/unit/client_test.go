@@ -12,16 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// --------
-
 func TestClient(t *testing.T) {
 	t.Run("first connection and hello message", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
-		// td.AddWaitToSelectedSockets(user1ws)
 		messageToSend1 := td.GetNextInfoMessageToWriteUnserialized(user1ws)
 		assert.Equal(t, chat_app_infra.HELLO, messageToSend1.Type)
-
 		td.Close()
 	})
 
@@ -31,7 +27,6 @@ func TestClient(t *testing.T) {
 		td.CreateNewClient(2, "newUser@email.com")
 		newUserConnectedMessage := td.GetNextInfoMessageToWriteUnserialized(user1ws)
 		assert.Equal(t, newUserConnectedMessage.Type, chat_app_infra.NEW_USER_CONNECTED_TO_CHAT)
-
 		td.Close()
 	})
 
@@ -43,8 +38,8 @@ func TestClient(t *testing.T) {
 		err := td.CreateRoom(user1ws, roomName, roomDescription)
 		assert.Nil(t, err)
 		messageOut := td.GetNextInfoMessageToWriteUnserialized(user1ws)
-		assert.Equal(t, messageOut.Type, chat_app_infra.ROOM_CREATED)
 
+		assert.Equal(t, messageOut.Type, chat_app_infra.ROOM_CREATED)
 		td.Close()
 	})
 
@@ -154,6 +149,20 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, privateMessage, message2Snapshot.Content)
 		assert.Equal(t, newRoomIdStr, message2Snapshot.RoomID.String())
 		assert.Equal(t, user2Email, message2Snapshot.UserEmail)
+
+		td.Close()
+	})
+
+	t.Run("User 1 gets notified if user2 has a connection problem", func(t *testing.T) {
+		td, user1ws, user2ws := NewTestDriverWith2Users()
+
+		user2ws.CloseConnection()
+
+		messageToUser1 := td.GetNextInfoMessageToWriteUnserialized(user1ws)
+		fmt.Println("-> ", messageToUser1)
+		assert.Equal(t, "USER_DISCONNECTED", string(messageToUser1.Type))
+		assert.Equal(t, "alice@email.com", messageToUser1.Content["user_email"])
+		assert.Equal(t, "2", messageToUser1.Content["user_id"])
 
 		td.Close()
 	})
