@@ -6,9 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// -- room message
-// -- broadcast message
-
 type MessageSnapshot struct {
 	ID        uuid.UUID
 	RoomID    uuid.UUID

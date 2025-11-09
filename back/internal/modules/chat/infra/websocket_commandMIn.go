@@ -22,7 +22,6 @@ func NewBroadcastMessageIn(content string) *BroadcastMessageIn {
 }
 
 func (bm *BroadcastMessageIn) Execute(c *chat_client.Client) {
-	fmt.Println("-->. broadcast command message In")
 	uuid.New()
 	message := messages.NewMessage(uuid.New(), uuid.Nil, c.GetUserData().Id, c.GetUserData().Email, bm.Content, time.Now())
 	c.BroadcastMessage(message)
