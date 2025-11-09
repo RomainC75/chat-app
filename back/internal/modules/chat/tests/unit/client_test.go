@@ -15,10 +15,6 @@ import (
 // --------
 
 func TestClient(t *testing.T) {
-	// ? 1 addWait to the selected sockets
-	// ? 2 trigger a message in a socket
-	// ? 3 WaitForNextMessageOut
-
 	t.Run("first connection and hello message", func(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
@@ -147,27 +143,17 @@ func TestClient(t *testing.T) {
 		// fmt.Println("+++ 1", messageToUser1)
 		// fmt.Println("+++ 2", messageOutToUser2)
 
-		/// test message to user1 - should receive the room message
-		message1 := messageToUser1.ToSnapshot().Content
-		assert.Equal(t, true, ok)
-		assert.Equal(t, privateMessage, message1)
-		roomId1 := messageToUser1.ToSnapshot().RoomID
-		assert.Equal(t, true, ok)
-		assert.Equal(t, newRoomIdStr, roomId1.String())
-		fromUserEmail := messageToUser1.ToSnapshot().UserEmail
-		assert.Equal(t, true, ok)
-		assert.Equal(t, user2Email, fromUserEmail)
+		// ? test message to user1 - should receive the room message
+		message1Snapshot := messageToUser1.ToSnapshot()
+		assert.Equal(t, privateMessage, message1Snapshot.Content)
+		assert.Equal(t, newRoomIdStr, message1Snapshot.RoomID.String())
+		assert.Equal(t, user2Email, message1Snapshot.UserEmail)
 
-		/// test message to user2 - should receive the room message
-		message2 := messageToUser2.ToSnapshot().Content
-		assert.Equal(t, true, ok)
-		assert.Equal(t, privateMessage, message2)
-		roomId2 := messageToUser2.ToSnapshot().RoomID
-		assert.Equal(t, true, ok)
-		assert.Equal(t, newRoomIdStr, roomId2.String())
-		fromUserEmail2 := messageToUser2.ToSnapshot().UserEmail
-		assert.Equal(t, true, ok)
-		assert.Equal(t, user2Email, fromUserEmail2)
+		// ? test message to user2 - should receive the room message
+		message2Snapshot := messageToUser2.ToSnapshot()
+		assert.Equal(t, privateMessage, message2Snapshot.Content)
+		assert.Equal(t, newRoomIdStr, message2Snapshot.RoomID.String())
+		assert.Equal(t, user2Email, message2Snapshot.UserEmail)
 
 		td.Close()
 	})
