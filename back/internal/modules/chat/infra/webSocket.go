@@ -68,7 +68,8 @@ func (fws *WebSocket) listenToNewMessages() {
 				_, payload, err := fws.conn.ReadMessage()
 				if err != nil {
 					slog.Error("-> client : error reading message from websocket", slog.String("error", err.Error()))
-					fws.sendErrorMessage()
+					// ! notify every clients tha this client disconnected
+					fws.cancel()
 					continue
 				}
 
@@ -88,6 +89,7 @@ func (fws *WebSocket) HandleMessageIn(payload []byte) (chat_client.ICommandMessa
 	msg, err := UnMarshallMessageIn(payload)
 	if err != nil {
 		slog.Error("-> client : error unMarshalling the payload")
+		return nil, err
 	}
 	switch msg.Type {
 	case BROADCAST_MESSAGE:

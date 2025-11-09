@@ -29,15 +29,14 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.UserData) {
-	client := chat_client.NewClient(m, conn, userData)
-	m.ConnectNewCient(client)
+	c := chat_client.NewClient(m, conn, userData)
+
+	m.ConnectNewCient(c)
 }
 
 // ? ===CLIENT HANDLING===
 
 func (m *Manager) ConnectNewCient(c *chat_client.Client) {
-	c.GoListen()
-	// c.GoWrite()
 	newUserConnectedEvent := &chat_client.NewUserConnectedEvent{
 		UserData: c.GetUserData(),
 	}

@@ -27,7 +27,7 @@ type Client struct {
 	room    IRoom
 	conn    IWebSocket
 	user    socket_shared.UserData
-	egress  chan (*messages.Message)
+	// egress  chan (*messages.Message)
 	// eventEgress chan (IEvents)
 	cancelFn context.CancelFunc
 	ctx      context.Context
@@ -36,16 +36,18 @@ type Client struct {
 func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	client := &Client{
-		manager:  manager,
-		conn:     conn,
-		user:     userData,
-		egress:   make(chan *messages.Message),
+	c := &Client{
+		manager: manager,
+		conn:    conn,
+		user:    userData,
+		// egress:   make(chan *messages.Message),
 		cancelFn: cancel,
 		ctx:      ctx,
 	}
-	client.WriteHelloMessage()
-	return client
+	// c.GoListen()
+	// c.GoWrite()
+	c.WriteHelloMessage()
+	return c
 }
 
 func (c *Client) PrepareToBeDeleted() {
@@ -60,17 +62,18 @@ func (c *Client) SendEventToClient(event IEvents) {
 	c.conn.WriteEvent(event)
 }
 
-func (c *Client) GoListen() {
-	go func() {
-		for {
-			select {
-			case <-c.ctx.Done():
-				return
-			case ICommandMessageIn := <-c.conn.GetChan():
-				ICommandMessageIn.Execute(c)
-			}
-		}
-	}()
+func (c *Client) ListenToMessageIn(commandMessageIn ICommandMessageIn) {
+	commandMessageIn.Execute(c)
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-c.ctx.Done():
+	// 			return
+	// 		case ICommandMessageIn := <-c.conn.GetChan():
+	// 			ICommandMessageIn.Execute(c)
+	// 		}
+	// 	}
+	// }()
 }
 
 // func (c *Client) GoWrite() {
@@ -108,7 +111,6 @@ func (c *Client) GetUserData() socket_shared.UserData {
 // === IN ===
 
 func (c *Client) BroadcastMessage(message *messages.Message) {
-	// bMessage := messages.BuildBroadcastMessageIn(message)
 	c.manager.BroadcastMessage(message)
 }
 
@@ -146,8 +148,3 @@ func (c *Client) SendRoomCreatedMessage(room IRoom) {
 	}
 	c.conn.WriteEvent(event)
 }
-
-// func (c *Client) SendRoomCreatedMessage(room IRoom) {
-// 	message := messages.NewMessage(uuid.NullUUID)
-// 	c.conn.WriteTextMessage(bMessageOut)
-// }
