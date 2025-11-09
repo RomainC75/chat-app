@@ -38,6 +38,7 @@ type WebSocket struct {
 	readChan chan (chat_client.ICommandMessageIn)
 	ctx      context.Context
 	cancel   context.CancelFunc
+	client   *chat_client.Client
 }
 
 func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
@@ -56,6 +57,10 @@ func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
 	}
 	fws.listenToNewMessages()
 	return fws, nil
+}
+
+func (fws *WebSocket) LinkToClient(c *chat_client.Client) {
+	fws.client = c
 }
 
 func (fws *WebSocket) listenToNewMessages() {
