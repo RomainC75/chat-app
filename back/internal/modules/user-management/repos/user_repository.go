@@ -1,4 +1,4 @@
-package repositories
+package user_repos
 
 import (
 	db "chat/db/sqlc"
