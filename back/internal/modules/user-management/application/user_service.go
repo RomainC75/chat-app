@@ -2,7 +2,6 @@ package user_management_app
 
 import (
 	"chat/internal/api/dto/requests"
-	custom_errors "chat/internal/api/errors"
 	shared_domain "chat/internal/modules/shared/domain"
 	user_management_domain "chat/internal/modules/user-management/domain"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
@@ -57,7 +56,7 @@ func NewUserSrv(
 
 func (userSrv *UserSrv) CreateUserSrv(ctx context.Context, user requests.SignupRequest) (CreateUserResponse, error) {
 	_, err := userSrv.userRepo.FindUserByEmail(ctx, user.Email)
-	if err != nil && errors.As(err, &custom_errors.ErrNotFound{}) {
+	if err == nil {
 		return CreateUserResponse{}, errors.New("email already used")
 	}
 
