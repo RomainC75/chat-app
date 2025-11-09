@@ -7,23 +7,39 @@ import (
 	chat_room "chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
+	shared_infra "chat/internal/modules/shared/infra"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type TestDriver struct {
-	manager *manager.Manager
-	sockets []*chat_app_infra.FakeWebSocket
+	manager     *manager.Manager
+	sockets     []*chat_app_infra.FakeWebSocket
+	fakeUuidGen *shared_infra.FakeUUIDGenerator
+	fakeClock   *shared_infra.FakeClock
 }
 
 func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket) {
-	manager := manager.NewManager()
+	fakeUuidGen := shared_infra.NewFakeUUIDGenerator()
+	fakeClock := shared_infra.NewFakeClock()
+	manager := manager.NewManager(fakeUuidGen, fakeClock)
 	td := &TestDriver{
-		manager: manager,
+		manager:     manager,
+		fakeUuidGen: fakeUuidGen,
+		fakeClock:   fakeClock,
 	}
 	user1socket := td.CreateNewClient(1, "bob@email.com")
 	return td, user1socket
+}
+
+func (td *TestDriver) SetNextUuid(nextUuid uuid.UUID) {
+	td.fakeUuidGen.ExpectedUUID = nextUuid
+}
+
+func (td *TestDriver) SetNextTime(nextTime time.Time) {
+	td.fakeClock.ExpectedNow = nextTime
 }
 
 func (td *TestDriver) CreateNewClient(id int32, email string) *chat_app_infra.FakeWebSocket {

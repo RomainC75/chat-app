@@ -1,4 +1,4 @@
-package user_management_infra
+package shared_infra
 
 import "github.com/google/uuid"
 

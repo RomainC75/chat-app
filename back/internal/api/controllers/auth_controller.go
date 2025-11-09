@@ -4,6 +4,7 @@ import (
 	"chat/internal/api/dto/requests"
 	repositories "chat/internal/api/repos"
 	validatorHandler "chat/internal/api/validator"
+	shared_infra "chat/internal/modules/shared/infra"
 	user_management_app "chat/internal/modules/user-management/application"
 	user_management_infra "chat/internal/modules/user-management/infra"
 	"chat/utils"
@@ -28,8 +29,8 @@ func NewAuthCtrl() *AuthCtrl {
 	return &AuthCtrl{
 		userSrv: user_management_app.NewUserSrv(
 			repositories.NewUserRepo(),
-			user_management_infra.NewInMemoryUUIDGenerator(),
-			user_management_infra.NewInMemoryClock(),
+			shared_infra.NewInMemoryUUIDGenerator(),
+			shared_infra.NewInMemoryClock(),
 			user_management_infra.NewInMemoryBcrypt(),
 			user_management_infra.NewInMemoryJWT(),
 		),

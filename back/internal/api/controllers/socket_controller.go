@@ -4,6 +4,7 @@ import (
 	chat_app "chat/internal/modules/chat/application"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
+	shared_infra "chat/internal/modules/shared/infra"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 	user_management_infra "chat/internal/modules/user-management/infra"
 	"fmt"
@@ -16,8 +17,10 @@ type ChatCtrl struct {
 }
 
 func NewChatCtrl() *ChatCtrl {
+	uuidGen := shared_infra.NewInMemoryUUIDGenerator()
+	clock := shared_infra.NewInMemoryClock()
 	return &ChatCtrl{
-		managerSrv: chat_app.NewManagerService(),
+		managerSrv: chat_app.NewManagerService(uuidGen, clock),
 		jwt:        user_management_infra.NewInMemoryJWT(),
 	}
 }

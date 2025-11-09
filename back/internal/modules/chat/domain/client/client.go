@@ -3,6 +3,7 @@ package chat_client
 import (
 	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
+	shared_domain "chat/internal/modules/shared/domain"
 	"context"
 
 	"github.com/google/uuid"
@@ -29,9 +30,11 @@ type Client struct {
 	user     socket_shared.UserData
 	cancelFn context.CancelFunc
 	ctx      context.Context
+	uuidGen  shared_domain.UuidGenerator
+	clock    shared_domain.Clock
 }
 
-func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData) *Client {
+func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &Client{
 		manager:  manager,
@@ -39,6 +42,8 @@ func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserDat
 		user:     userData,
 		cancelFn: cancel,
 		ctx:      ctx,
+		uuidGen:  uuidGen,
+		clock:    clock,
 	}
 	conn.LinkToClient(c)
 	c.WriteHelloMessage()

@@ -4,6 +4,7 @@ import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
+	shared_domain "chat/internal/modules/shared/domain"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"time"
 
@@ -13,10 +14,11 @@ import (
 type Room struct {
 	basicData RoomBasicData
 	clients   typedsyncmap.TSyncMap[*chat_client.Client, bool]
-	// messages
+	uuidGen   shared_domain.UuidGenerator
+	clock     shared_domain.Clock
 }
 
-func NewRoom(name string, description string, c *chat_client.Client) (uuid.UUID, *Room) {
+func NewRoom(name string, description string, c *chat_client.Client, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) (uuid.UUID, *Room) {
 	uuid := uuid.New()
 	basicData := RoomBasicData{
 		Uuid:        uuid,
@@ -27,6 +29,8 @@ func NewRoom(name string, description string, c *chat_client.Client) (uuid.UUID,
 	room := &Room{
 		basicData: basicData,
 		clients:   typedsyncmap.TSyncMap[*chat_client.Client, bool]{},
+		uuidGen:   uuidGen,
+		clock:     clock,
 	}
 	room.AddClient(c)
 	return uuid, room
