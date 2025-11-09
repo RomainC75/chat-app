@@ -3,12 +3,14 @@ package user_management_app
 import (
 	"chat/internal/api/dto/requests"
 	custom_errors "chat/internal/api/errors"
-	"chat/internal/api/shared"
+	shared_domain "chat/internal/modules/shared/domain"
 	user_management_domain "chat/internal/modules/user-management/domain"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 
 	"context"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type LogResponse struct {
@@ -17,8 +19,8 @@ type LogResponse struct {
 }
 
 type BasicUserResponse struct {
-	Id    int32  `json:"id"`
-	Email string `json:"email"`
+	Id    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
 }
 
 type VerifyResponse struct {
@@ -31,16 +33,16 @@ type CreateUserResponse struct {
 
 type UserSrv struct {
 	userRepo      user_management_domain.IUsers
-	uuidGenerator shared.UUIDGenerator
-	clock         shared.Clock
+	uuidGenerator shared_domain.UuidGenerator
+	clock         shared_domain.Clock
 	bcrypt        user_management_encrypt.Bcrypt
 	jwt           user_management_encrypt.JWT
 }
 
 func NewUserSrv(
 	userRepo user_management_domain.IUsers,
-	uuidGenerator shared.UUIDGenerator,
-	clock shared.Clock,
+	uuidGenerator shared_domain.UuidGenerator,
+	clock shared_domain.Clock,
 	bcrypt user_management_encrypt.Bcrypt,
 	jwt user_management_encrypt.JWT,
 ) *UserSrv {
@@ -70,14 +72,13 @@ func (userSrv *UserSrv) CreateUserSrv(ctx context.Context, user requests.SignupR
 		string(b),
 		userSrv.clock.Now(),
 	)
-
 	err = userSrv.userRepo.CreateUser(ctx, newUser)
 	if err != nil {
 		return CreateUserResponse{}, err
 	}
 	return CreateUserResponse{
 		BasicUserResponse: BasicUserResponse{
-			Id:    int32(newUser.GetID().ID()),
+			Id:    newUser.GetID(),
 			Email: newUser.GetEmail(),
 		},
 	}, nil
