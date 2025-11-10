@@ -8,8 +8,12 @@ import (
 	shared_infra "chat/internal/modules/shared/infra"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
 	user_management_infra "chat/internal/modules/user-management/infra"
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type ChatCtrl struct {
@@ -53,5 +57,17 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sc.managerSrv.HandleNewConnection(websocket, userData)
+}
 
+func (sc *ChatCtrl) GetRoomHistory(w http.ResponseWriter, r *http.Request) {
+	roomId := r.PathValue("roomid")
+	roomUuid, err := uuid.Parse(roomId)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
+		return
+	}
+	ctx := context.Background()
+	history := sc.managerSrv.GetRoomHistory(ctx, roomUuid)
+
+	json.NewEncoder(w).Encode(history)
 }

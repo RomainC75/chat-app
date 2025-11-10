@@ -12,13 +12,14 @@ import (
 )
 
 type Room struct {
+	messages  messages.IMessages
 	basicData RoomBasicData
 	clients   typedsyncmap.TSyncMap[*chat_client.Client, bool]
 	uuidGen   shared_domain.UuidGenerator
 	clock     shared_domain.Clock
 }
 
-func NewRoom(name string, description string, c *chat_client.Client, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) (uuid.UUID, *Room) {
+func NewRoom(name string, description string, messages messages.IMessages, c *chat_client.Client, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) (uuid.UUID, *Room) {
 	uuid := uuid.New()
 	basicData := RoomBasicData{
 		Uuid:        uuid,
@@ -27,6 +28,7 @@ func NewRoom(name string, description string, c *chat_client.Client, uuidGen sha
 		CreatedAt:   time.Now(),
 	}
 	room := &Room{
+		messages:  messages,
 		basicData: basicData,
 		clients:   typedsyncmap.TSyncMap[*chat_client.Client, bool]{},
 		uuidGen:   uuidGen,

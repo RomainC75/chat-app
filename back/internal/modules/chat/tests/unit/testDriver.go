@@ -26,8 +26,8 @@ type TestDriver struct {
 func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket) {
 	fakeUuidGen := shared_infra.NewFakeUUIDGenerator()
 	fakeClock := shared_infra.NewFakeClock()
-	manager := manager.NewManager(fakeUuidGen, fakeClock)
 	messages := chat_repos.NewInMemoryMessagesRepo()
+	manager := manager.NewManager(messages, fakeUuidGen, fakeClock)
 	td := &TestDriver{
 		messages:    messages,
 		manager:     manager,
@@ -59,7 +59,7 @@ func (td *TestDriver) CreateNewClient(id int32, email string) *chat_app_infra.Fa
 		Email: email,
 	}
 	td.sockets = append(td.sockets, newUserSocket)
-	td.manager.ServeWS(newUserSocket, td.messages, newUserData)
+	td.manager.ServeWS(newUserSocket, newUserData)
 
 	return newUserSocket
 }

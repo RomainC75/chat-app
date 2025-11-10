@@ -1,17 +1,47 @@
 package unit
 
 import (
+	chat_app "chat/internal/modules/chat/application"
 	chat_client "chat/internal/modules/chat/domain/client"
+	"chat/internal/modules/chat/domain/messages"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
+	chat_repos "chat/internal/modules/chat/repos"
+	shared_infra "chat/internal/modules/shared/infra"
+	"context"
 	"encoding/json"
 	"fmt"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+func CreateMessages(messagesRepo messages.IMessages, qty int, roomId uuid.UUID) {
+	for i := 0; i < qty; i++ {
+		newMsg := messages.NewMessage(uuid.New(), roomId, 123, "fake@email", "fakeContent", time.Now())
+		messagesRepo.Save(context.Background(), newMsg)
+	}
+}
+
+func TestRoomHistory(t *testing.T) {
+	t.Run("test room history", func(t *testing.T) {
+		roomId := uuid.MustParse("5ca5fa79-5cea-4497-b719-5da6b74a2028")
+		messagesRepo := chat_repos.NewInMemoryMessagesRepo()
+		CreateMessages(messagesRepo, 3, roomId)
+
+		fakeUuidGen := shared_infra.NewFakeUUIDGenerator()
+		fakeClock := shared_infra.NewFakeClock()
+		managerSrv := chat_app.NewManagerService(messagesRepo, fakeUuidGen, fakeClock)
+
+		history := managerSrv.GetRoomHistory(context.Background(), roomId)
+
+		assert.Equal(t, len(history), 3)
+
+	})
+}
 
 func TestClient(t *testing.T) {
 	t.Run("first connection and hello message", func(t *testing.T) {

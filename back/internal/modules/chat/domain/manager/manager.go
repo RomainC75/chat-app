@@ -15,26 +15,28 @@ import (
 )
 
 type Manager struct {
-	rooms   *typedsyncmap.TSyncMap[uuid.UUID, *chat_room.Room]
-	clients *typedsyncmap.TSyncMap[*chat_client.Client, bool]
-	m       *sync.RWMutex
-	uuidGen shared_domain.UuidGenerator
-	clock   shared_domain.Clock
+	rooms    *typedsyncmap.TSyncMap[uuid.UUID, *chat_room.Room]
+	clients  *typedsyncmap.TSyncMap[*chat_client.Client, bool]
+	m        *sync.RWMutex
+	messages messages.IMessages
+	uuidGen  shared_domain.UuidGenerator
+	clock    shared_domain.Clock
 }
 
-func NewManager(uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) *Manager {
+func NewManager(messages messages.IMessages, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) *Manager {
 	manager := Manager{
-		rooms:   typedsyncmap.NewSyncMap[uuid.UUID, *chat_room.Room](),
-		clients: typedsyncmap.NewSyncMap[*chat_client.Client, bool](),
-		m:       &sync.RWMutex{},
-		uuidGen: uuidGen,
-		clock:   clock,
+		rooms:    typedsyncmap.NewSyncMap[uuid.UUID, *chat_room.Room](),
+		clients:  typedsyncmap.NewSyncMap[*chat_client.Client, bool](),
+		m:        &sync.RWMutex{},
+		messages: messages,
+		uuidGen:  uuidGen,
+		clock:    clock,
 	}
 	return &manager
 }
 
-func (m *Manager) ServeWS(conn chat_client.IWebSocket, messages messages.IMessages, userData socket_shared.UserData) {
-	c := chat_client.NewClient(messages, m, conn, userData, m.uuidGen, m.clock)
+func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.UserData) {
+	c := chat_client.NewClient(m.messages, m, conn, userData, m.uuidGen, m.clock)
 
 	m.ConnectNewCient(c)
 }
@@ -98,7 +100,7 @@ func (m *Manager) CloseEveryClientConnections() {
 // ? === ROOM HANDLING===
 
 func (m *Manager) CreateRoom(c *chat_client.Client, roomName string, description string) {
-	uuid, room := chat_room.NewRoom(roomName, description, c, m.uuidGen, m.clock)
+	uuid, room := chat_room.NewRoom(roomName, description, m.messages, c, m.uuidGen, m.clock)
 	m.rooms.Store(uuid, room)
 	roomCreatedEvent := &chat_client.RoomCreatedEvent{
 		RoomId:   uuid,
