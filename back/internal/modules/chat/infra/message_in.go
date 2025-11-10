@@ -1,7 +1,33 @@
 package chat_app_infra
 
 import (
-	"github.com/google/uuid"
+	"encoding/json"
+)
+
+func UnMarshallMessageIn(payload []byte) (MessageIn, error) {
+	msi := MessageIn{}
+	err := json.Unmarshal(payload, &msi)
+	if err != nil {
+		return MessageIn{}, err
+	}
+	return msi, err
+}
+
+// IN
+type MessageIn struct {
+	Type    MessageInType     `json:"type"`
+	Content map[string]string `json:"content"`
+}
+
+type MessageInType string
+
+const (
+	ROOM_MESSAGE         MessageInType = "ROOM_MESSAGE"
+	BROADCAST_MESSAGE    MessageInType = "BROADCAST_MESSAGE"
+	CONNECT_TO_ROOM      MessageInType = "CONNECT_TO_ROOM"
+	CREATE_ROOM          MessageInType = "CREATE_ROOM"
+	SEND_TO_ROOM         MessageInType = "SEND_TO_ROOM"
+	DISCONNECT_FROM_ROOM MessageInType = "DISCONNECT_FROM_ROOM"
 )
 
 func BuildMessageIn(mType MessageInType, content map[string]string) MessageIn {
@@ -10,30 +36,4 @@ func BuildMessageIn(mType MessageInType, content map[string]string) MessageIn {
 		Content: content,
 	}
 	return mi
-}
-
-func BuildBroadcastMessageIn(message string) MessageIn {
-	return BuildMessageIn(BROADCAST_MESSAGE, map[string]string{
-		"message": message,
-	})
-}
-
-func BuildRoomMessageIn(roomId uuid.UUID, message string) MessageIn {
-	return BuildMessageIn(ROOM_MESSAGE, map[string]string{
-		"message": message,
-		"room_id": roomId.String(),
-	})
-}
-
-func BuildACreateRoomMessageIn(roomName string, description string) MessageIn {
-	return BuildMessageIn(CREATE_ROOM, map[string]string{
-		"name":        roomName,
-		"description": description,
-	})
-}
-
-func BuildConnectToRoomMessageIn(roomId string) MessageIn {
-	return BuildMessageIn(CONNECT_TO_ROOM, map[string]string{
-		"room_id": roomId,
-	})
 }

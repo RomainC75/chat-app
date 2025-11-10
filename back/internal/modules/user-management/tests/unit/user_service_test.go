@@ -18,6 +18,7 @@ func TestUser(t *testing.T) {
 		assert.Equal(t, FakeUuid, resp.Id)
 		assert.Equal(t, email, resp.Email)
 	})
+
 	t.Run("Signup : Return error if user exists", func(t *testing.T) {
 		td := NewTestDriver()
 		_, err := td.CreateUser(existingEmail, "qsdf")
@@ -38,7 +39,6 @@ func TestUser(t *testing.T) {
 		_, err := td.LoginUser(existingEmail, "azerty", false)
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, "wrong email or password")
-
 	})
 	t.Run("Login User: wrong email", func(t *testing.T) {
 		td := NewTestDriver()
@@ -46,4 +46,5 @@ func TestUser(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, "wrong email or password")
 	})
+
 }

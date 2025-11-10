@@ -6,7 +6,7 @@ import (
 
 type IWebSocket interface {
 	WriteTextMessage(message *messages.Message) error
-	WriteInfoMessage(messageType string, content map[string]string) error
+	WriteInfoMessage(messageType MessageOutType, content map[string]string) error
 	WriteEvent(event IEvents) error
 	WriteCloseMessage() error
 	LinkToClient(c *Client)

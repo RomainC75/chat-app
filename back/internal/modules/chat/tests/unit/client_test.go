@@ -1,6 +1,7 @@
 package unit
 
 import (
+	chat_client "chat/internal/modules/chat/domain/client"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
 	"encoding/json"
@@ -17,7 +18,7 @@ func TestClient(t *testing.T) {
 		td, user1ws := NewTestDriverAndConnectUser1()
 
 		messageToSend1 := td.GetNextInfoMessageToWriteUnserialized(user1ws)
-		assert.Equal(t, chat_app_infra.HELLO, messageToSend1.Type)
+		assert.Equal(t, chat_client.HELLO, messageToSend1.Type)
 		td.Close()
 	})
 
@@ -26,7 +27,7 @@ func TestClient(t *testing.T) {
 
 		td.CreateNewClient(2, "newUser@email.com")
 		newUserConnectedMessage := td.GetNextInfoMessageToWriteUnserialized(user1ws)
-		assert.Equal(t, newUserConnectedMessage.Type, chat_app_infra.NEW_USER_CONNECTED_TO_CHAT)
+		assert.Equal(t, newUserConnectedMessage.Type, chat_client.NEW_USER_CONNECTED_TO_CHAT)
 		td.Close()
 	})
 
@@ -39,7 +40,7 @@ func TestClient(t *testing.T) {
 		assert.Nil(t, err)
 		messageOut := td.GetNextInfoMessageToWriteUnserialized(user1ws)
 
-		assert.Equal(t, messageOut.Type, chat_app_infra.ROOM_CREATED)
+		assert.Equal(t, messageOut.Type, chat_client.ROOM_CREATED)
 		td.Close()
 	})
 
@@ -80,13 +81,13 @@ func TestClient(t *testing.T) {
 		messageToSendToUser1 := td.GetNextInfoMessageToWriteUnserialized(user1ws)
 		messageToSendToUser2 := td.GetNextInfoMessageToWriteUnserialized(user2ws)
 
-		assert.Equal(t, messageToSendToUser1.Type, chat_app_infra.ROOM_CREATED)
+		assert.Equal(t, messageToSendToUser1.Type, chat_client.ROOM_CREATED)
 		assert.Equal(t, messageToSendToUser1.Content["room_name"], roomName)
 		newRoomIdStr := messageToSendToUser1.Content["room_id"]
 		newRoomId, err := uuid.Parse(newRoomIdStr)
 		assert.Nil(t, err)
 
-		assert.Equal(t, messageToSendToUser2.Type, chat_app_infra.ROOM_CREATED)
+		assert.Equal(t, messageToSendToUser2.Type, chat_client.ROOM_CREATED)
 		assert.Equal(t, messageToSendToUser2.Content["room_name"], roomName)
 		var connectedClients []socket_shared.UserData
 		err = json.Unmarshal([]byte(messageToSendToUser2.Content["users"]), &connectedClients)
@@ -105,7 +106,7 @@ func TestClient(t *testing.T) {
 		fmt.Println("+++ 2", messageOutToUser2)
 
 		// ? test message to user1 - should receive a NEW_USER_CONNECTED_TO_ROOM notif
-		assert.Equal(t, chat_app_infra.NEW_USER_CONNECTED_TO_ROOM, messageOutToUser1.Type)
+		assert.Equal(t, chat_client.NEW_USER_CONNECTED_TO_ROOM, messageOutToUser1.Type)
 		user, ok := messageOutToUser1.Content["new_user"]
 		assert.Equal(t, true, ok)
 		var userData socket_shared.UserData
@@ -114,7 +115,7 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, int32(2), userData.Id)
 
 		// ?test message to user2 - should receive a CONNECTED_TO_ROOM notif
-		assert.Equal(t, chat_app_infra.CONNECTED_TO_ROOM, messageOutToUser2.Type)
+		assert.Equal(t, chat_client.CONNECTED_TO_ROOM, messageOutToUser2.Type)
 		users, ok := messageOutToUser2.Content["users"]
 		assert.Equal(t, true, ok)
 		var connectedUsersData []socket_shared.UserData

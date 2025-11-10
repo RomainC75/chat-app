@@ -43,12 +43,20 @@ func (fws *FakeWebSocket) WriteTextMessage(message *messages.Message) error {
 	return nil
 }
 
-func (fws *FakeWebSocket) WriteInfoMessage(messageType string, content map[string]string) error {
-	data := BuildMessageOut(MessageOutType(messageType), content)
+func (fws *FakeWebSocket) WriteInfoMessage(messageType chat_client.MessageOutType, content map[string]string) error {
+	data := BuildMessageOut(messageType, content)
 	fws.nextMessageTypeToWrite = websocket.TextMessage
 	b, _ := json.Marshal(data)
 	fws.nextInfoMessageToWrite = b
 	return nil
+}
+
+func (fws *FakeWebSocket) BuildMessageOut(mType chat_client.MessageOutType, content map[string]string) MessageOut {
+	mo := MessageOut{
+		Type:    mType,
+		Content: content,
+	}
+	return mo
 }
 
 func (fws *FakeWebSocket) WriteEvent(event chat_client.IEvents) error {

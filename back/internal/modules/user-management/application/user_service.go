@@ -5,6 +5,7 @@ import (
 	shared_domain "chat/internal/modules/shared/domain"
 	user_management_domain "chat/internal/modules/user-management/domain"
 	user_management_encrypt "chat/internal/modules/user-management/domain/encrypt"
+	"fmt"
 
 	"context"
 	"errors"
@@ -62,7 +63,7 @@ func (userSrv *UserSrv) CreateUserSrv(ctx context.Context, user requests.SignupR
 
 	b, err := userSrv.bcrypt.HashAndSalt(user.Password)
 	if err != nil {
-		return CreateUserResponse{}, errors.New("error trying to encrypt the password")
+		return CreateUserResponse{}, fmt.Errorf("error trying to encrypt the password : %w", err)
 	}
 
 	newUser := user_management_domain.NewUser(

@@ -131,7 +131,7 @@ func (fws *WebSocket) Cancel() {
 }
 
 func (fws *WebSocket) sendErrorMessage() {
-	badRequestMessage := BuildMessageOut(ERROR, map[string]string{
+	badRequestMessage := BuildMessageOut(chat_client.ERROR, map[string]string{
 		"message": "bad request",
 	})
 	bMessageOut, _ := json.Marshal(badRequestMessage)
@@ -139,7 +139,7 @@ func (fws *WebSocket) sendErrorMessage() {
 }
 
 func (fws *WebSocket) WriteTextMessage(message *messages.Message) error {
-	data := BuildMessageOut(HELLO, map[string]string{
+	data := BuildMessageOut(chat_client.HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
 	bMessageOut, _ := json.Marshal(data)
@@ -147,15 +147,15 @@ func (fws *WebSocket) WriteTextMessage(message *messages.Message) error {
 }
 
 func (fws *WebSocket) WriteHelloMessage() error {
-	data := BuildMessageOut(HELLO, map[string]string{
+	data := BuildMessageOut(chat_client.HELLO, map[string]string{
 		"message": "readyToCommunicate :-)",
 	})
 	bMessageOut, _ := json.Marshal(data)
 	return fws.conn.WriteMessage(websocket.TextMessage, bMessageOut)
 }
 
-func (fws *WebSocket) WriteInfoMessage(messageType string, content map[string]string) error {
-	data := BuildMessageOut(MessageOutType(messageType), content)
+func (fws *WebSocket) WriteInfoMessage(messageType chat_client.MessageOutType, content map[string]string) error {
+	data := BuildMessageOut(messageType, content)
 	bMessageOut, _ := json.Marshal(data)
 	return fws.conn.WriteMessage(websocket.TextMessage, bMessageOut)
 }
