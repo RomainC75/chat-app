@@ -3,7 +3,7 @@ package chat_room
 import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	shared_domain "chat/internal/modules/shared/domain"
 	typedsyncmap "chat/utils/typedSyncMap"
 	"time"
@@ -13,7 +13,7 @@ import (
 
 type Room struct {
 	messages  messages.IMessages
-	basicData RoomBasicData
+	basicData chat_shared.RoomBasicData
 	clients   typedsyncmap.TSyncMap[*chat_client.Client, bool]
 	uuidGen   shared_domain.UuidGenerator
 	clock     shared_domain.Clock
@@ -21,7 +21,7 @@ type Room struct {
 
 func NewRoom(name string, description string, messages messages.IMessages, c *chat_client.Client, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) (uuid.UUID, *Room) {
 	uuid := uuid.New()
-	basicData := RoomBasicData{
+	basicData := chat_shared.RoomBasicData{
 		Uuid:        uuid,
 		Name:        name,
 		Description: description,
@@ -56,8 +56,8 @@ func (r *Room) AddClient(c *chat_client.Client) {
 	c.SendEventToClient(connectedToRoomEvent)
 }
 
-func (r *Room) GetClients() []socket_shared.UserData {
-	clients := []socket_shared.UserData{}
+func (r *Room) GetClients() []chat_shared.UserData {
+	clients := []chat_shared.UserData{}
 	r.clients.Range(func(c *chat_client.Client, value bool) bool {
 		userData := c.GetUserData()
 		clients = append(clients, userData)
@@ -80,7 +80,7 @@ func (r *Room) BroadcastEvent(event chat_client.IEvents) {
 	})
 }
 
-func (r *Room) GetBasicData() RoomBasicData {
+func (r *Room) GetBasicData() chat_shared.RoomBasicData {
 	return r.basicData
 }
 

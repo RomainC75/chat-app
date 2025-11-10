@@ -4,6 +4,7 @@ import (
 	chat_app "chat/internal/modules/chat/application"
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
 	chat_repos "chat/internal/modules/chat/repos"
@@ -203,6 +204,24 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, "alice@email.com", messageToUser1.Content["user_email"])
 		assert.Equal(t, "2", messageToUser1.Content["user_id"])
 
+		td.Close()
+	})
+
+	t.Run("User3 get the room list when he connects", func(t *testing.T) {
+		td, user1ws, user2ws := NewTestDriverWith2Users()
+		td.CreateRoom(user1ws, "room1", "descrption 1")
+		td.CreateRoom(user2ws, "room2", "descrption 2")
+
+		user3ws := td.CreateNewClient(3, "user3@email.com")
+		roomsList := user3ws.GetRoomsList()
+
+		assert.Equal(t, 2, len(roomsList))
+		assert.NotEqual(t, -1, slices.IndexFunc(roomsList, func(rbd chat_shared.RoomBasicData) bool {
+			return rbd.Name == "room1"
+		}))
+		assert.NotEqual(t, -1, slices.IndexFunc(roomsList, func(rbd chat_shared.RoomBasicData) bool {
+			return rbd.Name == "room2"
+		}))
 		td.Close()
 	})
 }

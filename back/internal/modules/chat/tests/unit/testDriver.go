@@ -4,8 +4,7 @@ import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/manager"
 	"chat/internal/modules/chat/domain/messages"
-	chat_room "chat/internal/modules/chat/domain/room"
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
 	chat_repos "chat/internal/modules/chat/repos"
 	shared_infra "chat/internal/modules/shared/infra"
@@ -54,7 +53,7 @@ func (td *TestDriver) SetNextTime(nextTime time.Time) {
 
 func (td *TestDriver) CreateNewClient(id int32, email string) *chat_app_infra.FakeWebSocket {
 	newUserSocket := chat_app_infra.NewFakeWebSocket()
-	newUserData := socket_shared.UserData{
+	newUserData := chat_shared.UserData{
 		Id:    id,
 		Email: email,
 	}
@@ -83,7 +82,7 @@ func (td *TestDriver) TriggerMessageIn(socket *chat_app_infra.FakeWebSocket, ICo
 	return socket.TriggerMessageIn(ICommandMessageIn)
 }
 
-func (td *TestDriver) GetRoomData(uuid uuid.UUID) (chat_room.RoomBasicData, error) {
+func (td *TestDriver) GetRoomData(uuid uuid.UUID) (chat_shared.RoomBasicData, error) {
 	return td.manager.GetRoomBasicData(uuid)
 }
 

@@ -1,4 +1,4 @@
-package chat_room
+package chat_shared
 
 import (
 	"time"

@@ -4,7 +4,7 @@ import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
 	chat_room "chat/internal/modules/chat/domain/room"
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	shared_domain "chat/internal/modules/shared/domain"
 
 	typedsyncmap "chat/utils/typedSyncMap"
@@ -35,7 +35,7 @@ func NewManager(messages messages.IMessages, uuidGen shared_domain.UuidGenerator
 	return &manager
 }
 
-func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.UserData) {
+func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData chat_shared.UserData) {
 	c := chat_client.NewClient(m.messages, m, conn, userData, m.uuidGen, m.clock)
 
 	m.ConnectNewCient(c)
@@ -49,6 +49,21 @@ func (m *Manager) ConnectNewCient(c *chat_client.Client) {
 	}
 	m.BroadcastEvent(newUserConnectedEvent)
 	m.clients.Store(c, true)
+	m.SendRoomsList(c)
+}
+
+func (m *Manager) SendRoomsList(c *chat_client.Client) {
+	roomsList := []chat_shared.RoomBasicData{}
+	m.rooms.Range(func(key uuid.UUID, value *chat_room.Room) bool {
+		roomsList = append(roomsList, value.GetBasicData())
+		return true
+	})
+
+	rle := chat_client.RoomsListEvent{
+		RoomsList: roomsList,
+	}
+
+	c.SendEventToClient(rle)
 }
 
 func (m *Manager) BroadcastMessage(message *messages.Message) {
@@ -105,7 +120,7 @@ func (m *Manager) CreateRoom(c *chat_client.Client, roomName string, description
 	roomCreatedEvent := &chat_client.RoomCreatedEvent{
 		RoomId:   uuid,
 		RoomName: roomName,
-		Users:    []socket_shared.UserData{c.GetUserData()},
+		Users:    []chat_shared.UserData{c.GetUserData()},
 	}
 	m.BroadcastEvent(roomCreatedEvent)
 }
@@ -128,8 +143,8 @@ func (m *Manager) SendRoomMessage(message *messages.Message) {
 	foundRoom.Broadcast(message)
 }
 
-func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
-	listMap := map[uuid.UUID][]socket_shared.UserData{}
+func (m *Manager) GetUsersByRoom() map[uuid.UUID][]chat_shared.UserData {
+	listMap := map[uuid.UUID][]chat_shared.UserData{}
 	m.rooms.Range(func(uuid uuid.UUID, room *chat_room.Room) bool {
 		basicData := room.GetBasicData()
 		listMap[basicData.Uuid] = room.GetClients()
@@ -138,8 +153,8 @@ func (m *Manager) GetUsersByRoom() map[uuid.UUID][]socket_shared.UserData {
 	return listMap
 }
 
-func (m *Manager) GetRoomBasicData(id uuid.UUID) (chat_room.RoomBasicData, error) {
-	var res chat_room.RoomBasicData
+func (m *Manager) GetRoomBasicData(id uuid.UUID) (chat_shared.RoomBasicData, error) {
+	var res chat_shared.RoomBasicData
 	err := errors.New("room not found")
 	m.rooms.Range(func(uuid uuid.UUID, room *chat_room.Room) bool {
 		basicData := room.GetBasicData()

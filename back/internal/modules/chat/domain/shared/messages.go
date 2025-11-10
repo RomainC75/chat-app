@@ -1,4 +1,4 @@
-package socket_shared
+package chat_shared
 
 type Message struct {
 	Message string `json:"message"`

@@ -2,7 +2,7 @@ package chat_client
 
 import (
 	"chat/internal/modules/chat/domain/messages"
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	shared_domain "chat/internal/modules/shared/domain"
 	"context"
 
@@ -20,7 +20,7 @@ type IManager interface {
 type IRoom interface {
 	GetId() uuid.UUID
 	GetName() string
-	GetClients() []socket_shared.UserData
+	GetClients() []chat_shared.UserData
 }
 
 type Client struct {
@@ -28,7 +28,7 @@ type Client struct {
 	manager  IManager
 	room     IRoom
 	conn     IWebSocket
-	user     socket_shared.UserData
+	user     chat_shared.UserData
 	cancelFn context.CancelFunc
 	ctx      context.Context
 	uuidGen  shared_domain.UuidGenerator
@@ -39,7 +39,7 @@ func NewClient(
 	messages messages.IMessages,
 	manager IManager,
 	conn IWebSocket,
-	userData socket_shared.UserData,
+	userData chat_shared.UserData,
 	uuidGen shared_domain.UuidGenerator,
 	clock shared_domain.Clock,
 ) *Client {
@@ -75,7 +75,7 @@ func (c *Client) ListenToMessageIn(commandMessageIn ICommandMessageIn) {
 	commandMessageIn.Execute(c)
 }
 
-func (c *Client) GetUserData() socket_shared.UserData {
+func (c *Client) GetUserData() chat_shared.UserData {
 	return c.user
 }
 

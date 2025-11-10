@@ -1,7 +1,7 @@
 package chat_client
 
 import (
-	socket_shared "chat/internal/modules/chat/domain/shared"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	"encoding/json"
 	"fmt"
 
@@ -18,6 +18,7 @@ const (
 	MEMBER_LEAVED              MessageOutType = "MEMBER_LEAVED"
 	NEW_USER_CONNECTED_TO_CHAT MessageOutType = "NEW_USER_CONNECTED_TO_CHAT"
 	ROOM_CREATED               MessageOutType = "ROOM_CREATED"
+	ROOMS_LIST                 MessageOutType = "ROOMS_LIST"
 	CONNECTED_TO_ROOM          MessageOutType = "CONNECTED_TO_ROOM"
 	NEW_USER_CONNECTED_TO_ROOM MessageOutType = "NEW_USER_CONNECTED_TO_ROOM"
 	DISCONNECTED_FROM_ROOM     MessageOutType = "DISCONNECTED_FROM_ROOM"
@@ -33,7 +34,7 @@ type IEvents interface {
 type RoomCreatedEvent struct {
 	RoomId   uuid.UUID
 	RoomName string
-	Users    []socket_shared.UserData
+	Users    []chat_shared.UserData
 }
 
 func (rc RoomCreatedEvent) Execute(conn IWebSocket) {
@@ -47,7 +48,7 @@ func (rc RoomCreatedEvent) Execute(conn IWebSocket) {
 
 // ==
 type NewUserConnectedEvent struct {
-	socket_shared.UserData
+	chat_shared.UserData
 }
 
 func (nuce NewUserConnectedEvent) Execute(conn IWebSocket) {
@@ -69,7 +70,7 @@ func (he HelloEvent) Execute(conn IWebSocket) {
 
 // ==
 type ConnectedToRoomEvent struct {
-	Users    []socket_shared.UserData
+	Users    []chat_shared.UserData
 	RoomName string
 	RoomId   uuid.UUID
 }
@@ -84,8 +85,8 @@ func (ctr ConnectedToRoomEvent) Execute(conn IWebSocket) {
 }
 
 type NewUserConnectedToRoomEvent struct {
-	Users    []socket_shared.UserData
-	NewUser  socket_shared.UserData
+	Users    []chat_shared.UserData
+	NewUser  chat_shared.UserData
 	RoomName string
 	RoomId   uuid.UUID
 }
@@ -117,12 +118,25 @@ func (nrce NewRoomCreatedEvent) Execute(conn IWebSocket) {
 // ==
 
 type UserDisconnectedEvent struct {
-	UserData socket_shared.UserData
+	UserData chat_shared.UserData
 }
 
 func (ude UserDisconnectedEvent) Execute(conn IWebSocket) {
 	conn.WriteInfoMessage(USER_DISCONNECTED, map[string]string{
 		"user_id":    fmt.Sprintf("%d", ude.UserData.Id),
 		"user_email": ude.UserData.Email,
+	})
+}
+
+// ==
+
+type RoomsListEvent struct {
+	RoomsList []chat_shared.RoomBasicData
+}
+
+func (rle RoomsListEvent) Execute(conn IWebSocket) {
+	b, _ := json.Marshal(rle.RoomsList)
+	conn.WriteInfoMessage(ROOMS_LIST, map[string]string{
+		"rooms_list": string(b),
 	})
 }

@@ -26,7 +26,6 @@ const (
 	BROADCAST_MESSAGE    MessageInType = "BROADCAST_MESSAGE"
 	CONNECT_TO_ROOM      MessageInType = "CONNECT_TO_ROOM"
 	CREATE_ROOM          MessageInType = "CREATE_ROOM"
-	SEND_TO_ROOM         MessageInType = "SEND_TO_ROOM"
 	DISCONNECT_FROM_ROOM MessageInType = "DISCONNECT_FROM_ROOM"
 )
 

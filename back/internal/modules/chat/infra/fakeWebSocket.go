@@ -3,6 +3,7 @@ package chat_app_infra
 import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
+	chat_shared "chat/internal/modules/chat/domain/shared"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -15,6 +16,7 @@ type FakeWebSocket struct {
 	nextMessageTypeToWrite int
 	nextMessageToWrite     *messages.Message
 	nextInfoMessageToWrite []byte
+	roomsList              []chat_shared.RoomBasicData
 	client                 *chat_client.Client
 }
 
@@ -44,6 +46,15 @@ func (fws *FakeWebSocket) WriteTextMessage(message *messages.Message) error {
 }
 
 func (fws *FakeWebSocket) WriteInfoMessage(messageType chat_client.MessageOutType, content map[string]string) error {
+	if messageType == chat_client.ROOMS_LIST {
+		var roomsList []chat_shared.RoomBasicData
+		err := json.Unmarshal([]byte(content["rooms_list"]), &roomsList)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fws.roomsList = roomsList
+		return nil
+	}
 	data := BuildMessageOut(messageType, content)
 	fws.nextMessageTypeToWrite = websocket.TextMessage
 	b, _ := json.Marshal(data)
@@ -70,6 +81,10 @@ func (fws *FakeWebSocket) GetNextMessageToWrite() (messageType int, message *mes
 
 func (fws *FakeWebSocket) GetNextInfoMessageToWrite() (messageType int, p []byte, err error) {
 	return fws.nextMessageType, fws.nextInfoMessageToWrite, nil
+}
+
+func (fws *FakeWebSocket) GetRoomsList() []chat_shared.RoomBasicData {
+	return fws.roomsList
 }
 
 func (fws *FakeWebSocket) WriteCloseMessage() error {
