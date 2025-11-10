@@ -50,10 +50,9 @@ func NewWebSocket(w http.ResponseWriter, r *http.Request) (*WebSocket, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	fws := &WebSocket{
-		conn:     conn,
-		readChan: make(chan (chat_client.ICommandMessageIn)),
-		ctx:      ctx,
-		cancel:   cancel,
+		conn:   conn,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 	fws.listenToNewMessages()
 	return fws, nil
@@ -84,7 +83,7 @@ func (fws *WebSocket) listenToNewMessages() {
 					fws.sendErrorMessage()
 					continue
 				}
-				fws.readChan <- msg
+				fws.client.ListenToMessageIn(msg)
 			}
 		}
 	}()
