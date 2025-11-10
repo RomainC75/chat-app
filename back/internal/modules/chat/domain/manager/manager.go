@@ -33,8 +33,8 @@ func NewManager(uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) 
 	return &manager
 }
 
-func (m *Manager) ServeWS(conn chat_client.IWebSocket, userData socket_shared.UserData) {
-	c := chat_client.NewClient(m, conn, userData, m.uuidGen, m.clock)
+func (m *Manager) ServeWS(conn chat_client.IWebSocket, messages messages.IMessages, userData socket_shared.UserData) {
+	c := chat_client.NewClient(messages, m, conn, userData, m.uuidGen, m.clock)
 
 	m.ConnectNewCient(c)
 }

@@ -9,6 +9,7 @@ import (
 type MessageSnapshot struct {
 	ID        uuid.UUID
 	RoomID    uuid.UUID
+	RoomName  string
 	UserId    int32
 	UserEmail string
 	Content   string
@@ -18,6 +19,7 @@ type MessageSnapshot struct {
 type Message struct {
 	id        uuid.UUID
 	roomID    uuid.UUID
+	roomName  string
 	userId    int32
 	userEmail string
 	content   string
@@ -62,6 +64,7 @@ func (m *Message) ToSnapshot() MessageSnapshot {
 	return MessageSnapshot{
 		ID:        m.id,
 		RoomID:    m.roomID,
+		RoomName:  m.roomName,
 		UserId:    m.userId,
 		UserEmail: m.userEmail,
 		Content:   m.content,

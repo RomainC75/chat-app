@@ -24,6 +24,7 @@ type IRoom interface {
 }
 
 type Client struct {
+	messages messages.IMessages
 	manager  IManager
 	room     IRoom
 	conn     IWebSocket
@@ -34,9 +35,17 @@ type Client struct {
 	clock    shared_domain.Clock
 }
 
-func NewClient(manager IManager, conn IWebSocket, userData socket_shared.UserData, uuidGen shared_domain.UuidGenerator, clock shared_domain.Clock) *Client {
+func NewClient(
+	messages messages.IMessages,
+	manager IManager,
+	conn IWebSocket,
+	userData socket_shared.UserData,
+	uuidGen shared_domain.UuidGenerator,
+	clock shared_domain.Clock,
+) *Client {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &Client{
+		messages: messages,
 		manager:  manager,
 		conn:     conn,
 		user:     userData,
@@ -73,10 +82,12 @@ func (c *Client) GetUserData() socket_shared.UserData {
 // === IN ===
 
 func (c *Client) BroadcastMessage(message *messages.Message) {
+	_ = c.messages.Save(context.Background(), message)
 	c.manager.BroadcastMessage(message)
 }
 
 func (c *Client) SendRoomMessage(message *messages.Message) {
+	_ = c.messages.Save(context.Background(), message)
 	c.manager.SendRoomMessage(message)
 }
 

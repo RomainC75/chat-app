@@ -7,6 +7,7 @@ import (
 	chat_room "chat/internal/modules/chat/domain/room"
 	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
+	chat_repos "chat/internal/modules/chat/repos"
 	shared_infra "chat/internal/modules/shared/infra"
 	"encoding/json"
 	"time"
@@ -15,6 +16,7 @@ import (
 )
 
 type TestDriver struct {
+	messages    *chat_repos.InMemoryMessagesRepo
 	manager     *manager.Manager
 	sockets     []*chat_app_infra.FakeWebSocket
 	fakeUuidGen *shared_infra.FakeUUIDGenerator
@@ -25,7 +27,9 @@ func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket)
 	fakeUuidGen := shared_infra.NewFakeUUIDGenerator()
 	fakeClock := shared_infra.NewFakeClock()
 	manager := manager.NewManager(fakeUuidGen, fakeClock)
+	messages := chat_repos.NewInMemoryMessagesRepo()
 	td := &TestDriver{
+		messages:    messages,
 		manager:     manager,
 		fakeUuidGen: fakeUuidGen,
 		fakeClock:   fakeClock,
@@ -55,7 +59,7 @@ func (td *TestDriver) CreateNewClient(id int32, email string) *chat_app_infra.Fa
 		Email: email,
 	}
 	td.sockets = append(td.sockets, newUserSocket)
-	td.manager.ServeWS(newUserSocket, newUserData)
+	td.manager.ServeWS(newUserSocket, td.messages, newUserData)
 
 	return newUserSocket
 }
@@ -89,6 +93,15 @@ func (td *TestDriver) CreateRoom(userws *chat_app_infra.FakeWebSocket, roomName 
 		Description: description,
 	}
 	return td.TriggerMessageIn(userws, message)
+}
+
+func (td *TestDriver) GetSavedMessages() []messages.MessageSnapshot {
+	msgs := td.messages.GetSavedMessages()
+	snapshots := []messages.MessageSnapshot{}
+	for _, m := range msgs {
+		snapshots = append(snapshots, m.ToSnapshot())
+	}
+	return snapshots
 }
 
 func (td *TestDriver) Close() {

@@ -151,6 +151,14 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, newRoomIdStr, message2Snapshot.RoomID.String())
 		assert.Equal(t, user2Email, message2Snapshot.UserEmail)
 
+		// ? test if the message sent by user2 is saved
+		savedMessages := td.GetSavedMessages()
+		fmt.Println("messages : ", savedMessages)
+		assert.Equal(t, 1, len(savedMessages))
+		assert.Equal(t, privateMessage, savedMessages[0].Content)
+		assert.Equal(t, newRoomIdStr, savedMessages[0].RoomID.String())
+		assert.Equal(t, user2Email, savedMessages[0].UserEmail)
+
 		td.Close()
 	})
 
