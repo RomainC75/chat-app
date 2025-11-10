@@ -209,17 +209,23 @@ func TestClient(t *testing.T) {
 
 	t.Run("User3 get the room list when he connects", func(t *testing.T) {
 		td, user1ws, user2ws := NewTestDriverWith2Users()
+
+		// ? user 1 should have no room available
+		user1RoomsList := user1ws.GetRoomsList()
+		assert.Equal(t, 0, len(user1RoomsList))
+
 		td.CreateRoom(user1ws, "room1", "descrption 1")
 		td.CreateRoom(user2ws, "room2", "descrption 2")
 
 		user3ws := td.CreateNewClient(3, "user3@email.com")
-		roomsList := user3ws.GetRoomsList()
 
-		assert.Equal(t, 2, len(roomsList))
-		assert.NotEqual(t, -1, slices.IndexFunc(roomsList, func(rbd chat_shared.RoomBasicData) bool {
+		// ? user 3 shouls have 3 rooms available
+		user3RoomsList := user3ws.GetRoomsList()
+		assert.Equal(t, 2, len(user3RoomsList))
+		assert.NotEqual(t, -1, slices.IndexFunc(user3RoomsList, func(rbd chat_shared.RoomBasicData) bool {
 			return rbd.Name == "room1"
 		}))
-		assert.NotEqual(t, -1, slices.IndexFunc(roomsList, func(rbd chat_shared.RoomBasicData) bool {
+		assert.NotEqual(t, -1, slices.IndexFunc(user3RoomsList, func(rbd chat_shared.RoomBasicData) bool {
 			return rbd.Name == "room2"
 		}))
 		td.Close()
