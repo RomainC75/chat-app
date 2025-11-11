@@ -6,6 +6,9 @@ export const EWsMessageIn = {
   ROOM_CREATED: "ROOM_CREATED",
   CONNECTED_TO_ROOM: "CONNECTED_TO_ROOM",
   DISCONNECTED_FROM_ROOM: "DISCONNECTED_FROM_ROOM",
+  NEW_USER_CONNECTED_TO_CHAT: "NEW_USER_CONNECTED_TO_CHAT",
+  ROOMS_LIST: "ROOMS_LIST",
+  HELLO: "HELLO",
 } as const;
 
 export type EWsMessageIn = (typeof EWsMessageIn)[keyof typeof EWsMessageIn];

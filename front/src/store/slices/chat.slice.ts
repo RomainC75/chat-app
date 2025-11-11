@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { TChatSlice, TPrivateRoom } from "../../types/chat.type";
+import type { TAvailableRoom, TChatSlice, TPrivateRoom } from "../../types/chat.type";
 
 const initialState: TChatSlice = {
   publicRoom: null,
@@ -30,13 +30,12 @@ const chatSlice = createSlice({
       state.privateRoom = {
         id: action.payload.id,
         name: action.payload.name,
-        users: [],
-        messages: [],
+        
       } as TPrivateRoom
+    },
+    roomListReceived(state, action: PayloadAction<TAvailableRoom[]>){
+      state.availableRooms = action.payload
     }
-    // addRoom(state, action: PayloadAction<TRoom>) {
-    //       state.rooms.push(action.payload)
-    //     },
   },
 });
 
@@ -44,5 +43,6 @@ export default chatSlice.reducer;
 
 export const {
     setConnected,
-    privateRoomCreated
+    privateRoomCreated,
+    roomListReceived,
 } = chatSlice.actions;

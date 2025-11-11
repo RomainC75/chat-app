@@ -23,7 +23,12 @@ export type TPublicRoom = {
 
 export type TPrivateRoom = TPublicRoom & {
   id: string;
-  name: string;
+  name: string;        
+  description: string,
+  memberCount: number,
+  isPrivate: false,
+  created_at: Date,
+  lastActivity: Date,
 };
 
 export type TChatUsers = {
