@@ -10,7 +10,7 @@ type MessageSnapshot struct {
 	ID        uuid.UUID
 	RoomID    uuid.UUID
 	RoomName  string
-	UserId    int32
+	UserId    uuid.UUID
 	UserEmail string
 	Content   string
 	CreatedAt time.Time
@@ -20,13 +20,13 @@ type Message struct {
 	id        uuid.UUID
 	roomID    uuid.UUID
 	roomName  string
-	userId    int32
+	userId    uuid.UUID
 	userEmail string
 	content   string
 	createdAt time.Time
 }
 
-func NewMessage(id uuid.UUID, roomID uuid.UUID, userId int32, userEmail string, content string, createdAt time.Time) *Message {
+func NewMessage(id uuid.UUID, roomID uuid.UUID, userId uuid.UUID, userEmail string, content string, createdAt time.Time) *Message {
 	return &Message{
 		id:        id,
 		roomID:    roomID,
@@ -56,7 +56,7 @@ func (m *Message) String() string {
 	return m.content
 }
 
-func (m *Message) UserId() int32 {
+func (m *Message) UserId() uuid.UUID {
 	return m.userId
 }
 

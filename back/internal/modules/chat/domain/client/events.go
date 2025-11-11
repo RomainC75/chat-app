@@ -123,7 +123,7 @@ type UserDisconnectedEvent struct {
 
 func (ude UserDisconnectedEvent) Execute(conn IWebSocket) {
 	conn.WriteInfoMessage(USER_DISCONNECTED, map[string]string{
-		"user_id":    fmt.Sprintf("%d", ude.UserData.Id),
+		"user_id":    ude.UserData.Id.String(),
 		"user_email": ude.UserData.Email,
 	})
 }

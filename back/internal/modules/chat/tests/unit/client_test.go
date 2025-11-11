@@ -5,7 +5,6 @@ import (
 	chat_client "chat/internal/modules/chat/domain/client"
 	"chat/internal/modules/chat/domain/messages"
 	chat_shared "chat/internal/modules/chat/domain/shared"
-	socket_shared "chat/internal/modules/chat/domain/shared"
 	chat_app_infra "chat/internal/modules/chat/infra"
 	chat_repos "chat/internal/modules/chat/repos"
 	shared_infra "chat/internal/modules/shared/infra"
@@ -22,7 +21,7 @@ import (
 
 func CreateMessages(messagesRepo messages.IMessages, qty int, roomId uuid.UUID) {
 	for i := 0; i < qty; i++ {
-		newMsg := messages.NewMessage(uuid.New(), roomId, 123, "fake@email", "fakeContent", time.Now())
+		newMsg := messages.NewMessage(uuid.New(), roomId, uuid.New(), "fake@email", "fakeContent", time.Now())
 		messagesRepo.Save(context.Background(), newMsg)
 	}
 }
@@ -46,7 +45,7 @@ func TestRoomHistory(t *testing.T) {
 
 func TestClient(t *testing.T) {
 	t.Run("first connection and hello message", func(t *testing.T) {
-		td, user1ws := NewTestDriverAndConnectUser1()
+		td, user1ws, _ := NewTestDriverAndConnectUser1()
 
 		messageToSend1 := td.GetNextInfoMessageToWriteUnserialized(user1ws)
 		assert.Equal(t, chat_client.HELLO, messageToSend1.Type)
@@ -54,16 +53,18 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("users get notification when new user is connected to the chat", func(t *testing.T) {
-		td, user1ws := NewTestDriverAndConnectUser1()
+		td, user1ws, _ := NewTestDriverAndConnectUser1()
 
-		td.CreateNewClient(2, "newUser@email.com")
+		user2Uuid := uuid.MustParse("0cdfeef4-9239-49c4-b833-c309ad8d5e0f")
+		td.CreateNewClient(user2Uuid, "newUser@email.com")
 		newUserConnectedMessage := td.GetNextInfoMessageToWriteUnserialized(user1ws)
 		assert.Equal(t, newUserConnectedMessage.Type, chat_client.NEW_USER_CONNECTED_TO_CHAT)
+		fmt.Println("- ", newUserConnectedMessage)
 		td.Close()
 	})
 
 	t.Run("user creates a room", func(t *testing.T) {
-		td, user1ws := NewTestDriverAndConnectUser1()
+		td, user1ws, _ := NewTestDriverAndConnectUser1()
 
 		roomName := "newRoom"
 		roomDescription := "room description"
@@ -76,9 +77,10 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("broadcast message", func(t *testing.T) {
-		td, user1ws := NewTestDriverAndConnectUser1()
+		td, user1ws, user1Uuid := NewTestDriverAndConnectUser1()
 
-		user2ws := td.CreateNewClient(2, "bob@gmail.com")
+		user2Uuid := uuid.MustParse("0cdfeef4-9239-49c4-b833-c309ad8d5e0f")
+		user2ws := td.CreateNewClient(user2Uuid, "bob@gmail.com")
 
 		message := "broadcast_message content"
 		messageIn := &chat_app_infra.BroadcastMessageIn{
@@ -89,18 +91,18 @@ func TestClient(t *testing.T) {
 		messageToSendToUser2 := td.GetNextMessageToWrite(user2ws)
 
 		assert.Equal(t, message, messageToSendToUser1.String())
-		assert.Equal(t, int32(1), messageToSendToUser1.UserId())
+		assert.Equal(t, user1Uuid, messageToSendToUser1.UserId())
 		assert.Equal(t, message, messageToSendToUser2.String())
-		assert.Equal(t, int32(1), messageToSendToUser2.UserId())
+		assert.Equal(t, user1Uuid, messageToSendToUser2.UserId())
 		td.Close()
 	})
 
 	t.Run("users get notification when a user creates a room", func(t *testing.T) {
-		td, user1ws := NewTestDriverAndConnectUser1()
+		td, user1ws, user1Uuid := NewTestDriverAndConnectUser1()
 
-		user2Id := int32(2)
+		user2Uuid := uuid.MustParse("0cdfeef4-9239-49c4-b833-c309ad8d5e0f")
 		user2Email := "john@email.com"
-		user2ws := td.CreateNewClient(user2Id, user2Email)
+		user2ws := td.CreateNewClient(user2Uuid, user2Email)
 
 		// ? user1 creates room
 		roomName := "newRoom"
@@ -120,10 +122,10 @@ func TestClient(t *testing.T) {
 
 		assert.Equal(t, messageToSendToUser2.Type, chat_client.ROOM_CREATED)
 		assert.Equal(t, messageToSendToUser2.Content["room_name"], roomName)
-		var connectedClients []socket_shared.UserData
+		var connectedClients []chat_shared.UserData
 		err = json.Unmarshal([]byte(messageToSendToUser2.Content["users"]), &connectedClients)
 		assert.Nil(t, err)
-		assert.Equal(t, int32(1), connectedClients[0].Id)
+		assert.Equal(t, user1Uuid, connectedClients[0].Id)
 
 		// ? user2 tries to connect to the room
 		connectToRoomEvent := &chat_app_infra.ConnectToRoomIn{
@@ -140,21 +142,21 @@ func TestClient(t *testing.T) {
 		assert.Equal(t, chat_client.NEW_USER_CONNECTED_TO_ROOM, messageOutToUser1.Type)
 		user, ok := messageOutToUser1.Content["new_user"]
 		assert.Equal(t, true, ok)
-		var userData socket_shared.UserData
+		var userData chat_shared.UserData
 		err = json.Unmarshal([]byte(user), &userData)
 		assert.Nil(t, err)
-		assert.Equal(t, int32(2), userData.Id)
+		assert.Equal(t, user2Uuid, userData.Id)
 
 		// ?test message to user2 - should receive a CONNECTED_TO_ROOM notif
 		assert.Equal(t, chat_client.CONNECTED_TO_ROOM, messageOutToUser2.Type)
 		users, ok := messageOutToUser2.Content["users"]
 		assert.Equal(t, true, ok)
-		var connectedUsersData []socket_shared.UserData
+		var connectedUsersData []chat_shared.UserData
 		err = json.Unmarshal([]byte(users), &connectedUsersData)
 		assert.Nil(t, err)
 		assert.Equal(t, 2, len(connectedUsersData))
-		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud socket_shared.UserData) bool { return ud.Id == 1 }))
-		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud socket_shared.UserData) bool { return ud.Id == 2 }))
+		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud chat_shared.UserData) bool { return ud.Id == user1Uuid }))
+		assert.NotEqual(t, -1, slices.IndexFunc(connectedUsersData, func(ud chat_shared.UserData) bool { return ud.Id == user2Uuid }))
 
 		// ? user2 sends a message in the room
 		privateMessage := "private message"
@@ -194,7 +196,7 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("User 1 gets notified if user2 has a connection problem", func(t *testing.T) {
-		td, user1ws, user2ws := NewTestDriverWith2Users()
+		td, user1ws, user2ws, _, user2Uuid := NewTestDriverWith2Users()
 
 		user2ws.CloseConnection()
 
@@ -202,13 +204,13 @@ func TestClient(t *testing.T) {
 		fmt.Println("-> ", messageToUser1)
 		assert.Equal(t, "USER_DISCONNECTED", string(messageToUser1.Type))
 		assert.Equal(t, "alice@email.com", messageToUser1.Content["user_email"])
-		assert.Equal(t, "2", messageToUser1.Content["user_id"])
+		assert.Equal(t, user2Uuid.String(), string(messageToUser1.Content["user_id"]))
 
 		td.Close()
 	})
 
 	t.Run("User3 get the room list when he connects", func(t *testing.T) {
-		td, user1ws, user2ws := NewTestDriverWith2Users()
+		td, user1ws, user2ws, _, _ := NewTestDriverWith2Users()
 
 		// ? user 1 should have no room available
 		user1RoomsList := user1ws.GetRoomsList()
@@ -217,7 +219,7 @@ func TestClient(t *testing.T) {
 		td.CreateRoom(user1ws, "room1", "descrption 1")
 		td.CreateRoom(user2ws, "room2", "descrption 2")
 
-		user3ws := td.CreateNewClient(3, "user3@email.com")
+		user3ws := td.CreateNewClient(uuid.New(), "user3@email.com")
 
 		// ? user 3 shouls have 3 rooms available
 		user3RoomsList := user3ws.GetRoomsList()
@@ -230,4 +232,6 @@ func TestClient(t *testing.T) {
 		}))
 		td.Close()
 	})
+
+	// ! cannot connect with the same account
 }

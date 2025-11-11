@@ -22,8 +22,11 @@ type TestDriver struct {
 	fakeClock   *shared_infra.FakeClock
 }
 
-func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket) {
+func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket, uuid.UUID) {
+	user1Uuid := uuid.MustParse("0c18913c-0651-4ee4-99f3-72dcfe23b82e")
 	fakeUuidGen := shared_infra.NewFakeUUIDGenerator()
+	fakeUuidGen.ExpectedUUID = user1Uuid
+
 	fakeClock := shared_infra.NewFakeClock()
 	messages := chat_repos.NewInMemoryMessagesRepo()
 	manager := manager.NewManager(messages, fakeUuidGen, fakeClock)
@@ -33,14 +36,16 @@ func NewTestDriverAndConnectUser1() (*TestDriver, *chat_app_infra.FakeWebSocket)
 		fakeUuidGen: fakeUuidGen,
 		fakeClock:   fakeClock,
 	}
-	user1socket := td.CreateNewClient(1, "bob@email.com")
-	return td, user1socket
+	user1socket := td.CreateNewClient(user1Uuid, "bob@email.com")
+	return td, user1socket, user1Uuid
 }
 
-func NewTestDriverWith2Users() (*TestDriver, *chat_app_infra.FakeWebSocket, *chat_app_infra.FakeWebSocket) {
-	td, user1socket := NewTestDriverAndConnectUser1()
-	user2socket := td.CreateNewClient(2, "alice@email.com")
-	return td, user1socket, user2socket
+func NewTestDriverWith2Users() (*TestDriver, *chat_app_infra.FakeWebSocket, *chat_app_infra.FakeWebSocket, uuid.UUID, uuid.UUID) {
+
+	td, user1socket, user1Uuid := NewTestDriverAndConnectUser1()
+	user2Uuid := uuid.MustParse("0cdfeef4-9239-49c4-b833-c309ad8d5e0f")
+	user2socket := td.CreateNewClient(user2Uuid, "alice@email.com")
+	return td, user1socket, user2socket, user1Uuid, user2Uuid
 }
 
 func (td *TestDriver) SetNextUuid(nextUuid uuid.UUID) {
@@ -51,7 +56,7 @@ func (td *TestDriver) SetNextTime(nextTime time.Time) {
 	td.fakeClock.ExpectedNow = nextTime
 }
 
-func (td *TestDriver) CreateNewClient(id int32, email string) *chat_app_infra.FakeWebSocket {
+func (td *TestDriver) CreateNewClient(id uuid.UUID, email string) *chat_app_infra.FakeWebSocket {
 	newUserSocket := chat_app_infra.NewFakeWebSocket()
 	newUserData := chat_shared.UserData{
 		Id:    id,

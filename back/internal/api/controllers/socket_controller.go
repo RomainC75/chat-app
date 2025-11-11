@@ -47,7 +47,8 @@ func (sc *ChatCtrl) Chat(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(userId, userEmail)
 
 	userData := socket_shared.UserData{
-		Id:    int32(userId.(float64)),
+
+		Id:    uuid.MustParse(userId.(string)),
 		Email: userEmail.(string),
 	}
 
