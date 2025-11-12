@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 type InMemoryJWT struct {
@@ -19,7 +20,7 @@ func NewInMemoryJWT() *InMemoryJWT {
 
 type Claims struct {
 	*jwt.RegisteredClaims
-	ID    int32
+	ID    uuid.UUID
 	Email string
 }
 
@@ -32,9 +33,9 @@ func (JWT *InMemoryJWT) Generate(user *user_management_domain.User) (string, err
 	token.Claims = &Claims{
 		&jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(exp),
-			Subject:   fmt.Sprintf("%d", user.GetID().ID()),
+			Subject:   user.GetID().String(),
 		},
-		int32(user.GetID().ID()),
+		user.GetID(),
 		user.GetEmail(),
 	}
 	val, err := token.SignedString([]byte(secret))
