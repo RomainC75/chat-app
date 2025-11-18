@@ -3,9 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  CardActions,
   Grid,
   Dialog,
   DialogTitle,
@@ -13,14 +10,11 @@ import {
   DialogActions,
   TextField,
   IconButton,
-  Chip,
   Container,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Login as LoginIcon,
-  People as PeopleIcon,
-  AccessTime as TimeIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
 import "./Rooms.scss";
@@ -30,6 +24,7 @@ import { useSocket } from "../../hooks/socket.hook";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 import Room from "../Room/Room";
+import RoomCmp from "../RoomCmp/RoomCmp";
 
 
 interface RoomsProps {
@@ -77,24 +72,9 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
     }
   };
 
-  const handleRoomClick = (roomId: string) => {
-    if (onRoomSelect) {
-      onRoomSelect(roomId);
-    }
-  };
 
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
 
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
+
 
   return (
     <>
@@ -127,61 +107,10 @@ const Rooms: React.FC<RoomsProps> = ({ onRoomSelect }) => {
       </Box>
 
       <Grid container spacing={3} className="rooms-grid">
-        {availableRooms.map((room) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={room.id}>
-            <Card
-              className="room-card"
-              onClick={() => handleRoomClick(room.id)}
-            >
-              <CardContent>
-                <Box className="room-header">
-                  <Typography variant="h6" component="h2" className="room-name">
-                    {room.name}
-                  </Typography>
-                  {room.isPrivate && (
-                    <Chip
-                      label="Private"
-                      size="small"
-                      color="secondary"
-                      className="private-chip"
-                    />
-                  )}
-                </Box>
-
-                {room.description && (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    className="room-description"
-                  >
-                    {room.description}
-                  </Typography>
-                )}
-
-                <Box className="room-stats">
-                  <Box className="stat-item">
-                    <PeopleIcon fontSize="small" />
-                    <Typography variant="caption">
-                      {room.memberCount} members
-                    </Typography>
-                  </Box>
-                  <Box className="stat-item">
-                    <TimeIcon fontSize="small" />
-                    <Typography variant="caption">
-                      {formatTime(room.lastActivity)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-
-              <CardActions className="room-actions">
-                <Button size="small" fullWidth>
-                  Enter Room
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
+        {availableRooms.map((room, index) => (
+          <RoomCmp key={`rooomCmp-${index}`} room={room} onRoomSelect={onRoomSelect}/>
         ))}
+        {privateRoom ? <RoomCmp room={privateRoom} onRoomSelect={onRoomSelect}/> : <></>}
       </Grid>
 
       {/* Create Room Dialog */}

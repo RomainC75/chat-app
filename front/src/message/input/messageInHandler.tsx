@@ -46,7 +46,7 @@ export const MessageInHandler =
         Rule.checkAll([
           new ObjectKeys(parsedContent, ["room_id", "room_name", "users"]),
         ]);
-        privateRoomCreated(parsedContent.content as TPrivateRoom);
+        privateRoomCreated(parsedContent.content as TAvailableRoom);
         return;
       case EWsMessageIn.ROOMS_LIST:
         Rule.checkAll([new ObjectKeys(parsedContent, ["rooms_list"])]);

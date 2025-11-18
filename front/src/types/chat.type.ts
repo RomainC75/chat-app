@@ -1,6 +1,6 @@
 export type TChatSlice = {
-  publicRoom: TPublicRoom | null;
-  privateRoom: TPrivateRoom | null;
+  publicRoom: TAvailableRoom | null;
+  privateRoom: TAvailableRoom | null;
   availableRooms: TAvailableRoom[];
   isConnected: boolean;
 };
@@ -13,22 +13,6 @@ export type TAvailableRoom = {
   isPrivate: boolean;
   createdAt: Date;
   lastActivity: Date;
-};
-
-export type TPublicRoom = {
-
-  users: TChatUsers[];
-  messages: TChatMessage[];
-};
-
-export type TPrivateRoom = TPublicRoom & {
-  id: string;
-  name: string;        
-  description: string,
-  memberCount: number,
-  isPrivate: false,
-  created_at: Date,
-  lastActivity: Date,
 };
 
 export type TChatUsers = {
