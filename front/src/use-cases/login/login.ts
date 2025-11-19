@@ -5,7 +5,7 @@ export const answerSubmitted =
 
 export const alreadyValidated = createAction<void>("ALREADY_VALIDATED");
 
-export const submitAnswer =
+export const login =
   (questionId: string, answerLetter: AnswerLetter): AppThunk<Promise<void>> =>
   async (dispatch, getState, { questionGateway }) => {
     if (getState().answerValidation.data != null) {
