@@ -1,7 +1,19 @@
-import type { TChatSlice } from "../types/chat.type";
-import type { TUserSlice } from "../types/user.type";
+import type { TUser } from "../types/user.type";
+
+// export interface AppState {
+//   user: TChatSlice;
+//   chat: TUserSlice;
+// }
 
 export interface AppState {
-  user: TChatSlice;
-  chat: TUserSlice;
+  authManagement: {
+    data: TUser | null,
+    error: string | null;
+  };
+}
+
+
+export type TPokemon = {
+    name:string;
+    url: string;
 }
