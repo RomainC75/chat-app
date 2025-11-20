@@ -8,15 +8,15 @@ import {
 import type { AppState } from "./appState.ts";
 import { gateways, type Gateways } from "../adapters/secondary/gatewaysConfig.ts";
 import { AuthManagement } from "../core-logic/auth/reducers/authManagementReducer.ts";
-import type { TUser } from "../types/user.type.ts";
+import type { TLogin } from "../core-logic/auth/types/auth.type.ts";
 
 export const initReduxStore = (config: {
-    gateways ?: Partial<Gateways>
-    userInit: TUser
+    gateways?: Partial<Gateways>
+    userInit?: TLogin
 }) => {
   return configureStore({
     reducer: {
-      auth: AuthManagement(config.userInit ?? null ),
+      authManagement: AuthManagement(config.userInit ?? null ),
     },
     middleware: (getDefaultMiddleware) => {
       const mergedGateways: Gateways = {

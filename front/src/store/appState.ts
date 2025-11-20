@@ -1,4 +1,4 @@
-import type { TUser } from "../types/user.type";
+import type { TLogin } from "../core-logic/auth/types/auth.type";
 
 // export interface AppState {
 //   user: TChatSlice;
@@ -7,7 +7,7 @@ import type { TUser } from "../types/user.type";
 
 export interface AppState {
   authManagement: {
-    data: TUser | null,
+    data: TLogin | null,
     error: string | null;
   };
 }

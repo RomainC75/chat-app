@@ -1,9 +1,8 @@
-export type TLogin = {
+export type TSignup = {
     id: string
     email: string
 }
 
-export type TSignup = {
-    id: string
+export type TLogin = TSignup & {
     token: string
 }
