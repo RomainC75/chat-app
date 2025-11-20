@@ -9,15 +9,17 @@ import {
 } from '@mui/material'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { signupUser, type AppDispatch, type RootState } from '../../../../store/store';
+import { type AppDispatch } from '../../../../../store/store';
 import { Link, useNavigate } from 'react-router-dom';
+import { signup } from '../../../../../use-cases/auth/signup/signup';
 
 const Signup = () => {
     const dispach = useDispatch<AppDispatch>();
     const navigate = useNavigate();
-    const { isLoading } = useSelector(
-    (state: RootState) => state.user
+    const authState = useSelector(
+    (state: AppState) => state.authManagement
   );
+
 
   const [formData, setFormData] = useState({
     email: '',
@@ -40,7 +42,7 @@ const Signup = () => {
         console.log("---> password don't match")
         return
     }
-    await dispach(signupUser({signupUser:{email: formData.email, password: formData.password}})).unwrap()
+    await dispach(signup(formData.email, formData.password))
     navigate("/login")
   }
 
