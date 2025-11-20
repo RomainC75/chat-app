@@ -1,6 +1,7 @@
 import { createAction } from "@reduxjs/toolkit";
 import type { AppThunk } from "../../store/store";
 import type { TLogin } from "../../core-logic/auth/types/auth.type";
+import { errorRaised } from "../error";
 
 export const userLoggedIn =
   createAction<TLogin>("LOGGED_ID");
@@ -14,9 +15,14 @@ export const login =
       dispatch(alreadyValidated());
       return;
     }
-    const logValidation = await authGateway.login(
-      email,
-      password,
-    );
-    dispatch(userLoggedIn(logValidation));
+    try {
+      const logValidation = await authGateway.login(
+        email,
+        password,
+      );
+      dispatch(userLoggedIn(logValidation));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      dispatch(errorRaised(message))
+    }
   };

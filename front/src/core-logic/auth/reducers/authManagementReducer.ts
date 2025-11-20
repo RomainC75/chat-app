@@ -3,6 +3,7 @@ import type { AppState } from "../../../store/appState";
 import { userSignedUp } from "../use-cases/signup";
 import { userLoggedIn } from "../../../use-cases/login/login";
 import type { TLogin } from "../types/auth.type";
+import { errorRaised } from "../../../use-cases/error";
 
 
 const setInitialState = (user: TLogin | null): AppState["authManagement"] => ({
@@ -21,6 +22,14 @@ const authManagementReducer = (user: TLogin | null) => createReducer(
       .addCase(userLoggedIn, (state, action) => {
         state.data = action.payload;
         state.error = null;
+      })
+      .addCase(errorRaised, (state, action)=>{
+        state.data = {
+          id: "",
+          email: "",
+          token: ""
+        }
+        state.error = action.payload
       })
   },
 );
