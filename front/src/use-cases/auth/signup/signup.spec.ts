@@ -2,7 +2,7 @@ import { HttpAuthGateway } from "../../../adapters/secondary/gateways/httpAuthGa
 import { FakeAAuthApiLoader } from "../../../adapters/secondary/loaders/fakeAuthLoader";
 import type { AppState } from "../../../store/appState";
 import { initReduxStore, type ReduxStore } from "../../../store/store";
-import { login } from "./login";
+import { signup } from "./signup";
 
 describe("login use-case", () => {
   let store: ReduxStore;
@@ -22,20 +22,18 @@ describe("login use-case", () => {
   it("should login", async () => {
     const email = "bob@email.com";
     const id = "123";
-    const token = "TOKEN";
     fakeAuthApiLoader.expectedEmail = email;
     fakeAuthApiLoader.expectedId = id;
-    fakeAuthApiLoader.expectedToken = token;
 
-    await store.dispatch(login("john", "pass"));
+    await store.dispatch(signup("email@email.com", "pass"));
     expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
-      { data: { email, id, token }, error: null }
+      { data: null, error: null }
     );
   });
 
   it("should raise an error if the email/pass is wrong", async () => {
     fakeAuthApiLoader.shouldRaiseAnError = true;
-    await store.dispatch(login("john", "pass"));
+    await store.dispatch(signup("john", "pass"));
     expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
       { data: null, error: "wrong email/password" }
     );

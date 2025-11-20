@@ -17,18 +17,16 @@ const authManagementReducer = (user: TLogin | null) => createReducer(
   (builder) => {
     builder
       .addCase(userSignedUp, (state) => {
+        state.data = null;
         state.error = null;
       })
       .addCase(userLoggedIn, (state, action) => {
         state.data = action.payload;
         state.error = null;
       })
+
       .addCase(errorRaised, (state, action)=>{
-        state.data = {
-          id: "",
-          email: "",
-          token: ""
-        }
+        state.data = null;
         state.error = action.payload
       })
   },
