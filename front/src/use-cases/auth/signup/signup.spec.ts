@@ -19,7 +19,7 @@ describe("login use-case", () => {
     });
   });
 
-  it("should login", async () => {
+  it("should signup", async () => {
     const email = "bob@email.com";
     const id = "123";
     fakeAuthApiLoader.expectedEmail = email;
@@ -27,7 +27,7 @@ describe("login use-case", () => {
 
     await store.dispatch(signup("email@email.com", "pass"));
     expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
-      { data: null, error: null }
+      { data: null, error: null, isLoading: false }
     );
   });
 
@@ -35,7 +35,15 @@ describe("login use-case", () => {
     fakeAuthApiLoader.shouldRaiseAnError = true;
     await store.dispatch(signup("john", "pass"));
     expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
-      { data: null, error: "wrong email/password" }
+      { data: null, error: "wrong email/password", isLoading: false }
+    );
+  });
+
+  it("should be in loading mode when trying to signup", () => {
+    fakeAuthApiLoader.shouldRaiseAnError = true;
+    store.dispatch(signup("john", "pass"));
+    expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
+      { data: null, error: null, isLoading: true }
     );
   });
 });
