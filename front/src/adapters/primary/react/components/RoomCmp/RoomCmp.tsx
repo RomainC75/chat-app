@@ -12,7 +12,7 @@ import {
   People as PeopleIcon,
   AccessTime as TimeIcon,
 } from "@mui/icons-material";
-import type { TAvailableRoom } from "../../types/chat.type";
+import type { TAvailableRoom } from "../../../../../types/chat.type";
 
 export type TRoomCmp = {
   room: TAvailableRoom;

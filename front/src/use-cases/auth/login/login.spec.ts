@@ -1,7 +1,7 @@
-import { HttpAuthGateway } from "../../adapters/secondary/gateways/httpAuthGateway";
-import { FakeAAuthApiLoader } from "../../adapters/secondary/loaders/fakeAuthLoader";
-import type { AppState } from "../../store/appState";
-import { initReduxStore, type ReduxStore } from "../../store/store";
+import { HttpAuthGateway } from "../../../adapters/secondary/gateways/httpAuthGateway";
+import { FakeAAuthApiLoader } from "../../../adapters/secondary/loaders/fakeAuthLoader";
+import type { AppState } from "../../../store/appState";
+import { initReduxStore, type ReduxStore } from "../../../store/store";
 import { login } from "./login";
 
 describe("login use-case", () => {

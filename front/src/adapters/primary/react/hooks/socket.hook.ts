@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useDispatch } from "react-redux";
-import { type AppDispatch } from "../store/store";
-import { type IwebSocketMessageIn } from "../types/socket.type";
-import { privateRoomCreated, setConnected, roomListReceived } from "../store/slices/chat.slice";
-import { MessageInHandler } from "../message/input/messageInHandler";
+import { type AppDispatch } from "../../../../store/store";
+import { type IwebSocketMessageIn } from "../../../../types/socket.type";
+import { privateRoomCreated, setConnected, roomListReceived } from "../../../../store/slices/chat.slice";
+import { MessageInHandler } from "../../../../message/input/messageInHandler";
 
 export const useSocket = () => {
   const dispatch = useDispatch<AppDispatch>();

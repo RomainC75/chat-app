@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 
 import { useDispatch, useSelector } from 'react-redux'
-import { signupUser, type AppDispatch, type RootState } from '../store/store';
+import { signupUser, type AppDispatch, type RootState } from '../../../../store/store';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Signup = () => {

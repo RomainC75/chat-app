@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Loader from "../Loader/Loader";
-import { verify, type AppDispatch, type RootState } from '../../store/store';
+import { verify, type AppDispatch, type RootState } from '../../../../../store/store';
 
 
 interface ProtectedRouteProps {

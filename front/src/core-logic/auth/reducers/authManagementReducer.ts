@@ -1,7 +1,7 @@
 import { createReducer } from "@reduxjs/toolkit";
 import type { AppState } from "../../../store/appState";
 import { userSignedUp } from "../use-cases/signup";
-import { userLoggedIn } from "../../../use-cases/login/login";
+import { userLoggedIn } from "../../../use-cases/auth/login/login";
 import type { TLogin } from "../types/auth.type";
 import { errorRaised } from "../../../use-cases/error";
 

@@ -1,7 +1,7 @@
 import { createAction } from "@reduxjs/toolkit";
-import type { AppThunk } from "../../store/store";
-import type { TLogin } from "../../core-logic/auth/types/auth.type";
-import { errorRaised } from "../error";
+import type { AppThunk } from "../../../store/store";
+import type { TLogin } from "../../../core-logic/auth/types/auth.type";
+import { errorRaised } from "../../error";
 
 export const userLoggedIn =
   createAction<TLogin>("LOGGED_ID");

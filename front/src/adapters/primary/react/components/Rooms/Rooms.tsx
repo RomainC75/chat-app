@@ -19,10 +19,10 @@ import {
 } from "@mui/icons-material";
 import "./Rooms.scss";
 
-import { EWsMessageOut, type IwebSocketMessageOut } from "../../types/socket.type";
+import { EWsMessageOut, type IwebSocketMessageOut } from "../../../../../types/socket.type";
 import { useSocket } from "../../hooks/socket.hook";
 import { useSelector } from "react-redux";
-import type { RootState } from "../../store/store";
+import type { RootState } from "../../../../../store/store";
 import Room from "../Room/Room";
 import RoomCmp from "../RoomCmp/RoomCmp";
 
