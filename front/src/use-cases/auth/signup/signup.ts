@@ -23,5 +23,6 @@ export const signup =
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       dispatch(errorRaised(message))
+      throw error
     }
   };
