@@ -20,7 +20,7 @@ export class FakeAAuthApiLoader implements AuthApiLoader {
         }
         async signup(email: string, password: string): Promise<TSignup>{
             if (this.shouldRaiseAnError){
-                throw new Error("wrong email/password")
+                throw new Error("email already used")
             }
             return Promise.resolve({
                 id: this.expectedId,
