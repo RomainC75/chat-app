@@ -1,7 +1,7 @@
-import Signup from "./adapters/primary/react/components/Signup";
+import Signup from "./adapters/primary/react/components/Auth/Signup";
 import "./App.css";
 import { Navigate, Route, Routes, BrowserRouter as Router, } from "react-router-dom";
-import Login from "./adapters/primary/react/components/Login";
+import Login from "./adapters/primary/react/components/Auth/Login";
 import ProtectedRoute from "./adapters/primary/react/components/ProtectedRoute/ProtectedRoute";
 import Rooms from "./adapters/primary/react/components/Rooms/Rooms";
 
