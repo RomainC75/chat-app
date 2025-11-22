@@ -9,6 +9,7 @@ export interface AppState {
   authManagement: {
     data: TLogin | null,
     error: string | null;
+    isLoading: boolean;
   };
 }
 
