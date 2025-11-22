@@ -33,17 +33,21 @@ describe("login use-case", () => {
 
   it("should raise an error if the email/pass is wrong", async () => {
     fakeAuthApiLoader.shouldRaiseAnError = true;
-    await store.dispatch(signup("john", "pass"));
+    
+    await expect(store.dispatch(signup("bad", "bad")))
+      .rejects.toThrow("email already used");
     expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
-      { data: null, error: "wrong email/password", isLoading: false }
+      { data: null, error: "email already used", isLoading: false }
     );
   });
 
-  it("should be in loading mode when trying to signup", () => {
-    fakeAuthApiLoader.shouldRaiseAnError = true;
+  it("should be in loading mode when trying to signup", async () => {
+    
     store.dispatch(signup("john", "pass"));
+    
     expect(store.getState().authManagement).toEqual<AppState["authManagement"]>(
       { data: null, error: null, isLoading: true }
     );
+
   });
 });
